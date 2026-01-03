@@ -1,0 +1,20 @@
+{
+  "name": "Sivanta Homes Visitor Entry",
+  "short_name": "Sivanta Homes",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0a3d62",
+  "icons": [
+    {
+      "src": "https://github.com/pariflex1/visitor-entry-form-for-sivanta-homes/blob/main/logo.webp?raw=true",
+      "sizes": "192x192",
+      "type": "image/webp"
+    },
+    {
+      "src": "https://github.com/pariflex1/visitor-entry-form-for-sivanta-homes/blob/main/logo.webp?raw=true",
+      "sizes": "512x512",
+      "type": "image/webp"
+    }
+  ]
+}
