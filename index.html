@@ -6,23 +6,136 @@
     <title>Mobile Entry System</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Poppins', sans-serif; background-color: #f4f7f9; display: flex; justify-content: center; padding: 20px; }
-        .card { background: #fff; width: 100%; max-width: 420px; padding: 25px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; }
-        input[type="text"], input[type="tel"], input[type="file"] { 
-            width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box;
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background-color: #f4f7f9; 
+            display: flex; 
+            justify-content: center; 
+            padding: 20px; 
+            margin: 0;
         }
-        .search-row { display: flex; gap: 8px; }
-        .btn-search { background: #555; color: #fff; border: none; border-radius: 8px; width: 55px; cursor: pointer; }
-        .toggle-box { display: flex; gap: 10px; margin-top: 5px; }
-        .toggle-box input { display: none; }
-        .t-label { flex: 1; padding: 12px; text-align: center; background: #eee; border-radius: 8px; cursor: pointer; font-weight: 600; }
-        #in:checked + .label-in { background: #28a745; color: #fff; }
-        #out:checked + .label-out { background: #dc3545; color: #fff; }
-        .btn-submit { width: 100%; padding: 15px; background: #007bff; color: #fff; border: none; border-radius: 8px; font-size: 18px; font-weight: 600; cursor: pointer; margin-top: 15px; }
-        #loader, #success-page { display: none; text-align: center; padding: 20px; }
-        .wa-btn { display: inline-block; background: #25D366; color: #fff; padding: 12px 25px; border-radius: 30px; text-decoration: none; font-weight: 600; margin-top: 15px; }
+        .card { 
+            background: #fff; 
+            width: 100%; 
+            max-width: 420px; 
+            padding: 25px; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08); 
+        }
+        .form-group { 
+            margin-bottom: 15px; 
+        }
+        label { 
+            display: block; 
+            margin-bottom: 5px; 
+            font-weight: 600; 
+            font-size: 14px; 
+        }
+        input[type="text"], 
+        input[type="tel"], 
+        input[type="file"],
+        select { 
+            width: 100%; 
+            padding: 12px; 
+            border: 1px solid #ddd; 
+            border-radius: 8px; 
+            font-size: 16px; 
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        .search-row { 
+            display: flex; 
+            gap: 8px; 
+        }
+        .btn-search { 
+            background: #555; 
+            color: #fff; 
+            border: none; 
+            border-radius: 8px; 
+            width: 55px; 
+            cursor: pointer; 
+            font-size: 18px;
+        }
+        .btn-search:hover {
+            background: #333;
+        }
+        .toggle-box { 
+            display: flex; 
+            gap: 10px; 
+            margin-top: 5px; 
+        }
+        .toggle-box input { 
+            display: none; 
+        }
+        .t-label { 
+            flex: 1; 
+            padding: 12px; 
+            text-align: center; 
+            background: #eee; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            transition: all 0.3s ease;
+        }
+        .t-label:hover {
+            background: #ddd;
+        }
+        #in:checked + .label-in { 
+            background: #28a745; 
+            color: #fff; 
+        }
+        #out:checked + .label-out { 
+            background: #dc3545; 
+            color: #fff; 
+        }
+        .btn-submit { 
+            width: 100%; 
+            padding: 15px; 
+            background: #007bff; 
+            color: #fff; 
+            border: none; 
+            border-radius: 8px; 
+            font-size: 18px; 
+            font-weight: 600; 
+            cursor: pointer; 
+            margin-top: 15px; 
+            transition: background 0.3s ease;
+        }
+        .btn-submit:hover {
+            background: #0056b3;
+        }
+        #loader, #success-page { 
+            display: none; 
+            text-align: center; 
+            padding: 20px; 
+        }
+        .wa-btn { 
+            display: inline-block; 
+            background: #25D366; 
+            color: #fff; 
+            padding: 12px 25px; 
+            border-radius: 30px; 
+            text-decoration: none; 
+            font-weight: 600; 
+            margin-top: 15px; 
+            transition: background 0.3s ease;
+        }
+        .wa-btn:hover {
+            background: #128C7E;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -37,12 +150,31 @@
                     <input type="tel" id="mobile" maxlength="10" placeholder="9876543210" required pattern="\d{10}">
                     <button type="button" class="btn-search" onclick="searchUser()">🔍</button>
                 </div>
-                <small id="sm" style="font-size:12px; display:block; margin-top:4px;"></small>
+                <small id="sm" style="font-size:12px; display:block; margin-top:4px; color:#666;"></small>
             </div>
 
             <div class="form-group">
                 <label>Name</label>
                 <input type="text" id="name" placeholder="Full Name" required>
+            </div>
+
+            <div class="form-group">
+                <label>Purpose of Visit</label>
+                <select id="purpose" required onchange="toggleOtherPurpose()">
+                    <option value="">Select Purpose</option>
+                    <option value="Meeting">Meeting</option>
+                    <option value="Delivery">Delivery</option>
+                    <option value="Interview">Interview</option>
+                    <option value="Service/Repair">Service/Repair</option>
+                    <option value="Personal Visit">Personal Visit</option>
+                    <option value="Official Work">Official Work</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="otherPurposeDiv" style="display: none;">
+                <label>Specify Purpose</label>
+                <input type="text" id="otherPurpose" placeholder="Enter purpose details">
             </div>
 
             <div class="form-group">
@@ -56,7 +188,7 @@
             </div>
 
             <div class="form-group">
-                <label>Photos</label>
+                <label>Photos (Optional)</label>
                 <input type="file" id="p1" accept="image/*" style="margin-bottom:8px;">
                 <input type="file" id="p2" accept="image/*">
             </div>
@@ -66,85 +198,161 @@
     </div>
 
     <div id="loader">
+        <div class="spinner"></div>
         <h3>Processing...</h3>
         <p>Saving data to Google Sheets</p>
     </div>
 
     <div id="success-page">
-        <h2 style="color: #28a745;">Logged Successfully</h2>
-        <a id="wa-link" href="" target="_blank" class="wa-btn">Send WhatsApp Alert</a>
+        <h2 style="color: #28a745;">✓ Logged Successfully</h2>
+        <p>Entry has been recorded</p>
+        <a id="wa-link" href="" target="_blank" class="wa-btn">📱 Send WhatsApp Alert</a>
         <br><br>
-        <button onclick="location.reload()" style="background:none; border:none; color:#007bff; cursor:pointer; text-decoration:underline;">Add New Entry</button>
+        <button onclick="location.reload()" style="background:none; border:none; color:#007bff; cursor:pointer; text-decoration:underline; font-size:16px;">+ Add New Entry</button>
     </div>
 </div>
 
 <script>
-    // 1. UPDATE THIS URL
-    const SCRIPT_URL = "YOUR_NEW_DEPLOYED_URL_HERE";
+    // ============================================
+    // CONFIGURATION - UPDATE THIS URL
+    // ============================================
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby96UGB_dPMCQgv53abp4pfIMiG381K2c15_EA6I5GLJ4wDDuZ5EMFy5IXHEEWy5WNE/exec";
 
-    async function searchUser() {
-        const mob = document.getElementById('mobile').value;
-        if(mob.length !== 10) return alert("Please enter 10 digits");
-        document.getElementById('sm').innerText = "Searching...";
+    // ============================================
+    // TOGGLE OTHER PURPOSE FIELD
+    // ============================================
+    function toggleOtherPurpose() {
+        const purposeSelect = document.getElementById('purpose');
+        const otherDiv = document.getElementById('otherPurposeDiv');
+        const otherInput = document.getElementById('otherPurpose');
         
-        try {
-            const resp = await fetch(`${SCRIPT_URL}?action=search`, {
-                method: "POST",
-                mode: "no-cors", // Use no-cors to avoid initial block
-                body: JSON.stringify({ mobile: mob })
-            });
-            // Note: with no-cors, you can't read the response. 
-            // For a searchable response on external host, it's better to use GET
-            const getResp = await fetch(`${SCRIPT_URL}?action=search&mobile=${mob}`);
-            const res = await getResp.json();
-            
-            if(res.found) {
-                document.getElementById('name').value = res.name;
-                document.getElementById('sm').innerText = "Found: " + res.name;
-                document.getElementById('sm').style.color = "green";
-            } else {
-                document.getElementById('sm').innerText = "New Visitor";
-                document.getElementById('sm').style.color = "blue";
-            }
-        } catch (e) { console.error(e); }
+        if (purposeSelect.value === 'Other') {
+            otherDiv.style.display = 'block';
+            otherInput.required = true;
+        } else {
+            otherDiv.style.display = 'none';
+            otherInput.required = false;
+            otherInput.value = '';
+        }
     }
 
+    // ============================================
+    // SEARCH USER BY MOBILE NUMBER
+    // ============================================
+    async function searchUser() {
+        const mob = document.getElementById('mobile').value;
+        
+        // Validate mobile number
+        if(mob.length !== 10) {
+            alert("Please enter 10 digits");
+            return;
+        }
+        
+        const smElement = document.getElementById('sm');
+        smElement.innerText = "Searching...";
+        smElement.style.color = "#666";
+        
+        try {
+            const response = await fetch(`${SCRIPT_URL}?action=search&mobile=${mob}`, {
+                method: "GET"
+            });
+            
+            const result = await response.json();
+            
+            if(result.found) {
+                document.getElementById('name').value = result.name;
+                smElement.innerText = "✓ Found: " + result.name;
+                smElement.style.color = "green";
+            } else {
+                document.getElementById('name').value = "";
+                smElement.innerText = "New Visitor";
+                smElement.style.color = "blue";
+            }
+        } catch (error) {
+            console.error("Search error:", error);
+            smElement.innerText = "Error searching. Please try again.";
+            smElement.style.color = "red";
+        }
+    }
+
+    // ============================================
+    // FORM SUBMISSION
+    // ============================================
     document.getElementById('entryForm').onsubmit = async (e) => {
         e.preventDefault();
+        
+        // Show loader
         document.getElementById('form-content').style.display = 'none';
         document.getElementById('loader').style.display = 'block';
 
+        // Get purpose value (custom if Other selected)
+        const purposeValue = document.getElementById('purpose').value;
+        const finalPurpose = purposeValue === 'Other' 
+            ? document.getElementById('otherPurpose').value 
+            : purposeValue;
+
+        // Prepare payload
         const payload = {
             mobile: document.getElementById('mobile').value,
             name: document.getElementById('name').value,
+            purpose: finalPurpose,
             status: document.querySelector('input[name="status"]:checked').value,
-            photo1: null, photo2: null
+            photo1: null,
+            photo2: null
         };
 
-        const f1 = document.getElementById('p1').files[0];
-        if (f1) payload.photo1 = await compressImg(f1);
-        const f2 = document.getElementById('p2').files[0];
-        if (f2) payload.photo2 = await compressImg(f2);
+        try {
+            // Compress images if uploaded
+            const f1 = document.getElementById('p1').files[0];
+            if (f1) {
+                payload.photo1 = await compressImg(f1);
+            }
+            
+            const f2 = document.getElementById('p2').files[0];
+            if (f2) {
+                payload.photo2 = await compressImg(f2);
+            }
 
-        fetch(`${SCRIPT_URL}?action=submit`, {
-            method: "POST",
-            mode: "no-cors", // This prevents the CORS error on external hosting
-            body: JSON.stringify(payload)
-        }).then(() => {
-            // Since we use no-cors, we can't read the response back
-            // But we know it's sent. We show success after a short delay.
-            setTimeout(() => {
+            // Send data to Google Apps Script
+            const response = await fetch(SCRIPT_URL, {
+                method: "POST",
+                body: JSON.stringify({
+                    action: 'submit',
+                    data: payload
+                })
+            });
+
+            const result = await response.json();
+            
+            if(result.status === 'success') {
+                // Show success page
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('success-page').style.display = 'block';
-                // Manual WA trigger link
-                const msg = `Entry: ${payload.name} (${payload.mobile}) is ${payload.status}`;
-                document.getElementById('wa-link').href = "https://wa.me/919876543210?text=" + encodeURIComponent(msg);
-            }, 2000);
-        }).catch(err => alert("Error: " + err));
+                
+                // Set WhatsApp link from server response
+                if(result.waLink) {
+                    document.getElementById('wa-link').href = result.waLink;
+                } else {
+                    // Fallback manual link
+                    const msg = `Entry: ${payload.name} (${payload.mobile}) is ${payload.status}\nPurpose: ${payload.purpose}`;
+                    document.getElementById('wa-link').href = "https://wa.me/919876543210?text=" + encodeURIComponent(msg);
+                }
+            } else {
+                throw new Error(result.message || "Submission failed");
+            }
+        } catch (error) {
+            console.error("Submission error:", error);
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('form-content').style.display = 'block';
+            alert("Error submitting form: " + error.message);
+        }
     };
 
+    // ============================================
+    // IMAGE COMPRESSION
+    // ============================================
     async function compressImg(file) {
-        return new Promise((res) => {
+        return new Promise((resolve) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
             reader.onload = (e) => {
@@ -152,12 +360,29 @@
                 img.src = e.target.result;
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
-                    const max = 800;
-                    let w = img.width, h = img.height;
-                    if (w > max) { h = Math.round(h * (max / w)); w = max; }
-                    canvas.width = w; canvas.height = h;
-                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                    res({ data: canvas.toDataURL('image/jpeg', 0.6).split(',')[1], type: 'image/jpeg' });
+                    const maxSize = 800;
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    // Resize if image is larger than maxSize
+                    if (width > maxSize || height > maxSize) {
+                        if (width > height) {
+                            height = Math.round(height * (maxSize / width));
+                            width = maxSize;
+                        } else {
+                            width = Math.round(width * (maxSize / height));
+                            height = maxSize;
+                        }
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                    
+                    resolve({
+                        data: canvas.toDataURL('image/jpeg', 0.6).split(',')[1],
+                        type: 'image/jpeg'
+                    });
                 };
             };
         });
