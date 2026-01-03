@@ -20,6 +20,8 @@
             min-height: 100vh;
             padding: 15px; 
             margin: 0;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
         
         .card { 
@@ -28,16 +30,20 @@
             max-width: 480px; 
             padding: 20px; 
             border-radius: 16px; 
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1); 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin: auto;
         }
         
         @media (max-width: 480px) {
             body {
                 padding: 10px;
+                align-items: stretch;
             }
             .card {
                 padding: 20px 16px;
                 border-radius: 12px;
+                min-height: auto;
+                margin: 0;
             }
         }
         
