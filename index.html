@@ -1,9 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mobile Entry System</title>
+    <meta charset="utf-8">
+    <title>Sivanta Homes Visitor Entry</title>
+    <meta name="Sivanta Homes Visitor Entry" />
+    <meta property="og:title" content="Sivanta Homes Visitor Entry" />
+    <meta property="og:description" content="Sivanta Homes Visitor Entry" />
+    <meta property="og:image" content="https://github.com/pariflex1/visitor-entry-form-for-sivanta-homes/blob/main/logo.webp?raw=true" />
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
         body { 
@@ -136,6 +139,14 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        .info-box {
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            color: #1976d2;
+        }
     </style>
 </head>
 <body>
@@ -180,14 +191,16 @@
             <div class="form-group">
                 <label>Status</label>
                 <div class="toggle-box">
-                    <input type="radio" id="in" name="status" value="IN" checked>
+                    <input type="radio" id="in" name="status" value="IN" checked onchange="handleStatusChange()">
                     <label for="in" class="t-label label-in">IN</label>
-                    <input type="radio" id="out" name="status" value="OUT">
+                    <input type="radio" id="out" name="status" value="OUT" onchange="handleStatusChange()">
                     <label for="out" class="t-label label-out">OUT</label>
                 </div>
             </div>
 
-            <div class="form-group">
+            <div id="statusInfo" class="info-box" style="display:none;"></div>
+
+            <div class="form-group" id="photoSection">
                 <label>Photos (Optional)</label>
                 <input type="file" id="p1" accept="image/*" style="margin-bottom:8px;">
                 <input type="file" id="p2" accept="image/*">
@@ -200,12 +213,12 @@
     <div id="loader">
         <div class="spinner"></div>
         <h3>Processing...</h3>
-        <p>Saving data to Google Sheets</p>
+        <p id="loaderText">Saving data to Google Sheets</p>
     </div>
 
     <div id="success-page">
         <h2 style="color: #28a745;">✓ Logged Successfully</h2>
-        <p>Entry has been recorded</p>
+        <p id="successMessage">Entry has been recorded</p>
         <a id="wa-link" href="" target="_blank" class="wa-btn">📱 Send WhatsApp Alert</a>
         <br><br>
         <button onclick="location.reload()" style="background:none; border:none; color:#007bff; cursor:pointer; text-decoration:underline; font-size:16px;">+ Add New Entry</button>
@@ -216,7 +229,9 @@
     // ============================================
     // CONFIGURATION - UPDATE THIS URL
     // ============================================
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby96UGB_dPMCQgv53abp4pfIMiG381K2c15_EA6I5GLJ4wDDuZ5EMFy5IXHEEWy5WNE/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwiR9jXli0NHzALb97UsNTZrcdJkAQJyoBRsjbs8YhoN3sQAiDMzkfNxtLe1PBQerXO/exec";
+
+    let lastSearchResult = null;
 
     // ============================================
     // TOGGLE OTHER PURPOSE FIELD
@@ -233,6 +248,34 @@
             otherDiv.style.display = 'none';
             otherInput.required = false;
             otherInput.value = '';
+        }
+    }
+
+    // ============================================
+    // HANDLE STATUS CHANGE
+    // ============================================
+    function handleStatusChange() {
+        const status = document.querySelector('input[name="status"]:checked').value;
+        const infoBox = document.getElementById('statusInfo');
+        const photoSection = document.getElementById('photoSection');
+        const purposeSection = document.getElementById('purpose').closest('.form-group');
+        const otherPurposeDiv = document.getElementById('otherPurposeDiv');
+        const purposeSelect = document.getElementById('purpose');
+        const otherPurposeInput = document.getElementById('otherPurpose');
+        
+        if (status === 'OUT') {
+            infoBox.style.display = 'block';
+            infoBox.innerHTML = '⚠️ OUT status will update the existing IN entry with exit time.';
+            photoSection.style.display = 'none'; // Hide photos for OUT
+            purposeSection.style.display = 'none'; // Hide purpose for OUT
+            otherPurposeDiv.style.display = 'none'; // Hide other purpose for OUT
+            purposeSelect.required = false; // Remove required validation
+            otherPurposeInput.required = false;
+        } else {
+            infoBox.style.display = 'none';
+            photoSection.style.display = 'block'; // Show photos for IN
+            purposeSection.style.display = 'block'; // Show purpose for IN
+            purposeSelect.required = true; // Add required validation back
         }
     }
 
@@ -258,20 +301,29 @@
             });
             
             const result = await response.json();
+            lastSearchResult = result;
             
             if(result.found) {
                 document.getElementById('name').value = result.name;
-                smElement.innerText = "✓ Found: " + result.name;
-                smElement.style.color = "green";
+                
+                if(result.hasActiveEntry) {
+                    smElement.innerHTML = `✓ Found: ${result.name}<br><small style="color:#ff9800;">Active entry since ${result.inTime}</small>`;
+                    smElement.style.color = "green";
+                } else {
+                    smElement.innerText = "✓ Found: " + result.name;
+                    smElement.style.color = "green";
+                }
             } else {
                 document.getElementById('name').value = "";
                 smElement.innerText = "New Visitor";
                 smElement.style.color = "blue";
+                lastSearchResult = null;
             }
         } catch (error) {
             console.error("Search error:", error);
             smElement.innerText = "Error searching. Please try again.";
             smElement.style.color = "red";
+            lastSearchResult = null;
         }
     }
 
@@ -281,36 +333,57 @@
     document.getElementById('entryForm').onsubmit = async (e) => {
         e.preventDefault();
         
+        const status = document.querySelector('input[name="status"]:checked').value;
+        
+        // Validate OUT status
+        if(status === 'OUT') {
+            if(!lastSearchResult || !lastSearchResult.hasActiveEntry) {
+                alert("⚠️ No active IN entry found for this mobile number. Please search first or select IN status.");
+                return;
+            }
+        }
+        
         // Show loader
         document.getElementById('form-content').style.display = 'none';
         document.getElementById('loader').style.display = 'block';
+        
+        if(status === 'OUT') {
+            document.getElementById('loaderText').innerText = 'Updating exit time...';
+        } else {
+            document.getElementById('loaderText').innerText = 'Creating new entry...';
+        }
 
-        // Get purpose value (custom if Other selected)
-        const purposeValue = document.getElementById('purpose').value;
-        const finalPurpose = purposeValue === 'Other' 
-            ? document.getElementById('otherPurpose').value 
-            : purposeValue;
+        // Get purpose value (only for IN status)
+        let finalPurpose = '';
+        if(status === 'IN') {
+            const purposeValue = document.getElementById('purpose').value;
+            finalPurpose = purposeValue === 'Other' 
+                ? document.getElementById('otherPurpose').value 
+                : purposeValue;
+        }
 
         // Prepare payload
         const payload = {
             mobile: document.getElementById('mobile').value,
             name: document.getElementById('name').value,
             purpose: finalPurpose,
-            status: document.querySelector('input[name="status"]:checked').value,
+            status: status,
             photo1: null,
             photo2: null
         };
 
         try {
-            // Compress images if uploaded
-            const f1 = document.getElementById('p1').files[0];
-            if (f1) {
-                payload.photo1 = await compressImg(f1);
-            }
-            
-            const f2 = document.getElementById('p2').files[0];
-            if (f2) {
-                payload.photo2 = await compressImg(f2);
+            // Only compress images for IN status
+            if(status === 'IN') {
+                const f1 = document.getElementById('p1').files[0];
+                if (f1) {
+                    payload.photo1 = await compressImg(f1);
+                }
+                
+                const f2 = document.getElementById('p2').files[0];
+                if (f2) {
+                    payload.photo2 = await compressImg(f2);
+                }
             }
 
             // Send data to Google Apps Script
@@ -329,12 +402,18 @@
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('success-page').style.display = 'block';
                 
+                if(status === 'OUT') {
+                    document.getElementById('successMessage').innerText = 'Exit time recorded successfully';
+                } else {
+                    document.getElementById('successMessage').innerText = 'Entry recorded successfully';
+                }
+                
                 // Set WhatsApp link from server response
                 if(result.waLink) {
                     document.getElementById('wa-link').href = result.waLink;
                 } else {
                     // Fallback manual link
-                    const msg = `Entry: ${payload.name} (${payload.mobile}) is ${payload.status}\nPurpose: ${payload.purpose}`;
+                    const msg = `${status} Entry: ${payload.name} (${payload.mobile})\nPurpose: ${payload.purpose}`;
                     document.getElementById('wa-link').href = "https://wa.me/919876543210?text=" + encodeURIComponent(msg);
                 }
             } else {
