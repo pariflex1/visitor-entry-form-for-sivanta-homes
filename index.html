@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gate Entry System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
+        .card { background: white; width: 100%; max-width: 400px; padding: 25px; border-radius: 15px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); border-top: 6px solid #007bff; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; color: #444; }
+        input[type="text"], input[type="tel"], input[type="file"] { 
+            width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; 
+        }
+        .search-row { display: flex; gap: 8px; }
+        .btn-search { background: #6c757d; color: white; border: none; border-radius: 8px; width: 50px; cursor: pointer; font-size: 18px; }
+        .status-toggle { display: flex; gap: 10px; }
+        .status-toggle input { display: none; }
+        .st-label { flex: 1; padding: 12px; text-align: center; background: #eee; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        #in:checked + .label-in { background: #28a745; color: white; }
+        #out:checked + .label-out { background: #dc3545; color: white; }
+        .btn-submit { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: 600; cursor: pointer; margin-top: 10px; }
+        #loader, #success-page { display: none; text-align: center; }
+        .wa-btn { display: inline-block; background: #25D366; color: white; padding: 12px 25px; border-radius: 30px; text-decoration: none; font-weight: 600; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div id="form-content">
+        <h2 style="text-align:center; margin-bottom:20px;">Gate Entry</h2>
+        <form id="entryForm">
+            <div class="form-group">
+                <label>Mobile Number (10 Digits)</label>
+                <div class="search-row">
+                    <input type="tel" id="mobile" maxlength="10" placeholder="9876543210" required pattern="\d{10}">
+                    <button type="button" class="btn-search" onclick="searchUser()">🔍</button>
+                </div>
+                <small id="sm" style="font-size:11px;"></small>
+            </div>
+
+            <div class="form-group">
+                <label>Visitor Name</label>
+                <input type="text" id="name" placeholder="Full Name" required>
+            </div>
+
+            <div class="form-group">
+                <label>Entry/Exit</label>
+                <div class="status-toggle">
+                    <input type="radio" id="in" name="status" value="IN" checked>
+                    <label for="in" class="st-label label-in">IN</label>
+                    <input type="radio" id="out" name="status" value="OUT">
+                    <label for="out" class="st-label label-out">OUT</label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Photos (Up to 2)</label>
+                <input type="file" id="p1" accept="image/*" style="margin-bottom:8px;">
+                <input type="file" id="p2" accept="image/*">
+            </div>
+
+            <button type="submit" class="btn-submit">Submit Entry</button>
+        </form>
+    </div>
+
+    <div id="loader">
+        <p>Compressing & Uploading...</p>
+        <div style="color: #007bff;">Please wait...</div>
+    </div>
+
+    <div id="success-page">
+        <h2 style="color: #28a745;">Logged Successfully!</h2>
+        <a id="wa-link" href="" target="_blank" class="wa-btn">Send WhatsApp Alert</a>
+        <br><br>
+        <button onclick="location.reload()" style="background:none; border:none; color:#007bff; cursor:pointer; text-decoration:underline;">New Entry</button>
+    </div>
+</div>
+
+<script>
+    // PASTE YOUR GOOGLE WEB APP URL HERE
+    const SCRIPT_URL = "YOUR_GOOGLE_WEB_APP_URL_HERE";
+
+    async function searchUser() {
+        const mob = document.getElementById('mobile').value;
+        if(mob.length !== 10) return alert("Enter 10 digits");
+        document.getElementById('sm').innerText = "Searching...";
+        
+        try {
+            const resp = await fetch(SCRIPT_URL + "?action=search", {
+                method: "POST",
+                body: JSON.stringify({ mobile: mob })
+            });
+            const res = await resp.json();
+            if(res.found) {
+                document.getElementById('name').value = res.name;
+                document.getElementById('sm').innerText = "Welcome back, " + res.name;
+                document.getElementById('sm').style.color = "green";
+            } else {
+                document.getElementById('sm').innerText = "New Visitor detected.";
+                document.getElementById('sm').style.color = "blue";
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    document.getElementById('entryForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const mob = document.getElementById('mobile').value;
+        if(mob.length !== 10) return alert("Invalid Mobile");
+
+        document.getElementById('form-content').style.display = 'none';
+        document.getElementById('loader').style.display = 'block';
+
+        const payload = {
+            mobile: mob,
+            name: document.getElementById('name').value,
+            status: document.querySelector('input[name="status"]:checked').value,
+            photo1: null, photo2: null
+        };
+
+        const f1 = document.getElementById('p1').files[0];
+        if (f1) payload.photo1 = await compressImg(f1);
+        const f2 = document.getElementById('p2').files[0];
+        if (f2) payload.photo2 = await compressImg(f2);
+
+        try {
+            const resp = await fetch(SCRIPT_URL + "?action=submit", {
+                method: "POST",
+                body: JSON.stringify(payload)
+            });
+            const res = await resp.json();
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('success-page').style.display = 'block';
+            document.getElementById('wa-link').href = res.waLink;
+        } catch (err) {
+            alert("Error saving data.");
+            document.getElementById('form-content').style.display = 'block';
+            document.getElementById('loader').style.display = 'none';
+        }
+    };
+
+    async function compressImg(file) {
+        return new Promise((res) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (e) => {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const max = 800;
+                    let w = img.width, h = img.height;
+                    if (w > max) { h = Math.round(h * (max / w)); w = max; }
+                    canvas.width = w; canvas.height = h;
+                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                    res({ data: canvas.toDataURL('image/jpeg', 0.7).split(',')[1], type: 'image/jpeg' });
+                };
+            };
+        });
+    }
+</script>
+</body>
+</html>
