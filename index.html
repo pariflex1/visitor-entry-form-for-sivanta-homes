@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mobile Entry System</title>
+    <title>Visitor Management System</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
         * {
@@ -14,36 +14,82 @@
         body { 
             font-family: 'Poppins', sans-serif; 
             background-color: #f4f7f9; 
-            display: flex; 
-            justify-content: center; 
-            align-items: flex-start;
-            min-height: 100vh;
-            padding: 15px; 
             margin: 0;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        /* Tab Navigation */
+        .tab-container {
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .tabs {
+            display: flex;
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 16px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            font-size: 16px;
+            font-weight: 600;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .tab-btn.active {
+            color: #007bff;
+            border-bottom-color: #007bff;
+        }
+
+        .tab-btn:active {
+            background: #f5f5f5;
+        }
+
+        /* Content Container */
+        .content-wrapper {
+            display: flex;
+            justify-content: center;
+            padding: 15px;
+            min-height: calc(100vh - 60px);
+        }
+
+        .tab-content {
+            display: none;
+            width: 100%;
+            max-width: 480px;
+        }
+
+        .tab-content.active {
+            display: block;
         }
         
         .card { 
             background: #fff; 
             width: 100%; 
-            max-width: 480px; 
             padding: 20px; 
             border-radius: 16px; 
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            margin: auto;
         }
         
         @media (max-width: 480px) {
-            body {
+            .content-wrapper {
                 padding: 10px;
-                align-items: stretch;
             }
             .card {
                 padding: 20px 16px;
                 border-radius: 12px;
-                min-height: auto;
-                margin: 0;
             }
         }
         
@@ -60,7 +106,9 @@
         }
         
         input[type="text"], 
-        input[type="tel"], 
+        input[type="tel"],
+        input[type="date"],
+        input[type="password"],
         input[type="file"],
         select { 
             width: 100%; 
@@ -77,6 +125,8 @@
         
         input[type="text"]:focus, 
         input[type="tel"]:focus,
+        input[type="date"]:focus,
+        input[type="password"]:focus,
         select:focus { 
             outline: none;
             border-color: #007bff;
@@ -87,15 +137,6 @@
             padding: 12px;
             font-size: 14px;
             cursor: pointer;
-        }
-        
-        @media (max-width: 480px) {
-            input[type="text"], 
-            input[type="tel"], 
-            input[type="file"],
-            select {
-                font-size: 16px; /* Prevents zoom on iOS */
-            }
         }
         
         .search-row { 
@@ -128,12 +169,6 @@
             transform: scale(0.95);
         }
         
-        @media (hover: hover) {
-            .btn-search:hover {
-                background: #333;
-            }
-        }
-        
         .toggle-box { 
             display: flex; 
             gap: 12px; 
@@ -163,12 +198,6 @@
             transform: scale(0.97);
         }
         
-        @media (hover: hover) {
-            .t-label:hover {
-                background: #e8e8e8;
-            }
-        }
-        
         #in:checked + .label-in { 
             background: #28a745; 
             color: #fff;
@@ -183,7 +212,7 @@
             box-shadow: 0 2px 8px rgba(220,53,69,0.3);
         }
         
-        .btn-submit { 
+        .btn-submit, .btn-filter { 
             width: 100%; 
             padding: 16px; 
             background: #007bff; 
@@ -199,17 +228,10 @@
             touch-action: manipulation;
         }
         
-        .btn-submit:active {
+        .btn-submit:active, .btn-filter:active {
             background: #0056b3;
             transform: translateY(2px);
             box-shadow: 0 2px 8px rgba(0,123,255,0.3);
-        }
-        
-        @media (hover: hover) {
-            .btn-submit:hover {
-                background: #0056b3;
-                box-shadow: 0 6px 16px rgba(0,123,255,0.4);
-            }
         }
         
         #loader, #success-page { 
@@ -237,13 +259,6 @@
             background: #128C7E;
             transform: translateY(2px);
             box-shadow: 0 2px 8px rgba(37,211,102,0.3);
-        }
-        
-        @media (hover: hover) {
-            .wa-btn:hover {
-                background: #128C7E;
-                box-shadow: 0 6px 16px rgba(37,211,102,0.4);
-            }
         }
         
         .spinner {
@@ -274,29 +289,134 @@
         h2 {
             font-size: 24px;
             margin: 0 0 20px 0;
+            text-align: center;
+        }
+
+        h3 {
+            font-size: 18px;
+            margin: 20px 0 10px 0;
+            color: #333;
         }
         
         small {
             font-size: 13px;
             line-height: 1.4;
         }
-        
-        /* Improve touch targets */
-        button, 
-        .t-label,
-        .wa-btn,
-        input[type="file"] {
-            min-height: 44px; /* iOS recommended touch target */
+
+        /* Records List Styles */
+        .filter-section {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
         }
-        
-        /* Prevent text selection on buttons */
-        button,
-        .t-label,
-        .wa-btn {
-            -webkit-touch-callout: none;
+
+        .filter-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
         }
-        
-        /* Select dropdown arrow for better mobile UX */
+
+        .filter-row > div {
+            flex: 1;
+        }
+
+        .records-list {
+            max-height: 60vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .record-card {
+            background: #fff;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .record-card:active {
+            transform: scale(0.98);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .record-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .record-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-in {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-out {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .record-details {
+            font-size: 13px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .record-details div {
+            margin-bottom: 4px;
+        }
+
+        .record-details strong {
+            color: #333;
+        }
+
+        .no-records {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .btn-clear {
+            background: #6c757d;
+            padding: 10px 16px;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .records-count {
+            text-align: center;
+            padding: 10px;
+            background: #e3f2fd;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            color: #1976d2;
+            font-weight: 600;
+        }
+
+        .guard-info-box {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 18px;
+        }
+
+        /* Select dropdown arrow */
         select {
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
             background-repeat: no-repeat;
@@ -307,321 +427,451 @@
 </head>
 <body>
 
-<div class="card">
-    <div id="form-content">
-        <h2 style="text-align:center; margin-top:0;">Visitor Entry</h2>
-        <form id="entryForm">
-            <div class="form-group">
-                <label>Mobile Number (10 Digits)</label>
-                <div class="search-row">
-                    <input type="tel" id="mobile" maxlength="10" placeholder="9876543210" required pattern="\d{10}">
-                    <button type="button" class="btn-search" onclick="searchUser()">🔍</button>
+<!-- Tab Navigation -->
+<div class="tab-container" id="mainApp" style="display:none;">
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('entry')">📝 Entry</button>
+        <button class="tab-btn" onclick="switchTab('records')">📋 Records</button>
+        <button class="tab-btn" onclick="logout()">🚪 Logout</button>
+    </div>
+</div>
+
+<!-- Login Screen -->
+<div id="loginScreen" style="display:block;">
+    <div style="display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px;">
+        <div class="card" style="max-width: 400px;">
+            <h2>🔐 Guard Login</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Guard Name</label>
+                    <input type="text" id="guardName" placeholder="Enter your name" required>
                 </div>
-                <small id="sm" style="font-size:12px; display:block; margin-top:4px; color:#666;"></small>
+                <div class="form-group">
+                    <label>PIN Code (4 digits)</label>
+                    <input type="password" id="guardPin" maxlength="4" placeholder="****" required pattern="\d{4}">
+                </div>
+                <button type="submit" class="btn-submit">Login</button>
+            </form>
+            <div id="loginError" style="color: #dc3545; text-align: center; margin-top: 15px; display: none;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Content Wrapper -->
+<div class="content-wrapper" id="contentWrapper" style="display:none;">
+    
+    <!-- ENTRY TAB -->
+    <div id="entryTab" class="tab-content active">
+        <div class="card">
+            <div id="form-content">
+                <h2>Visitor Entry</h2>
+                <form id="entryForm">
+                    <div class="form-group">
+                        <label>Mobile Number (10 Digits)</label>
+                        <div class="search-row">
+                            <input type="tel" id="mobile" maxlength="10" placeholder="9876543210" required pattern="\d{10}">
+                            <button type="button" class="btn-search" onclick="searchUser()">🔍</button>
+                        </div>
+                        <small id="sm" style="font-size:12px; display:block; margin-top:4px; color:#666;"></small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Name</label>
+                        <input type="text" id="name" placeholder="Full Name" required>
+                    </div>
+
+                    <div class="form-group" id="purposeGroup">
+                        <label>Purpose of Visit</label>
+                        <select id="purpose" required onchange="toggleOtherPurpose()">
+                            <option value="">Select Purpose</option>
+                            <option value="Meeting">Meeting</option>
+                            <option value="Delivery">Delivery</option>
+                            <option value="Interview">Interview</option>
+                            <option value="Service/Repair">Service/Repair</option>
+                            <option value="Personal Visit">Personal Visit</option>
+                            <option value="Official Work">Official Work</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" id="otherPurposeDiv" style="display: none;">
+                        <label>Specify Purpose</label>
+                        <input type="text" id="otherPurpose" placeholder="Enter purpose details">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Status</label>
+                        <div class="toggle-box">
+                            <input type="radio" id="in" name="status" value="IN" checked onchange="handleStatusChange()">
+                            <label for="in" class="t-label label-in">IN</label>
+                            <input type="radio" id="out" name="status" value="OUT" onchange="handleStatusChange()">
+                            <label for="out" class="t-label label-out">OUT</label>
+                        </div>
+                    </div>
+
+                    <div id="statusInfo" class="info-box" style="display:none;"></div>
+
+                    <div class="form-group guard-info-box">
+                        <label style="margin-bottom: 4px; font-size: 13px; color: #666;">Guard on Duty</label>
+                        <div style="font-weight: 600; color: #333; font-size: 16px;" id="guardOnDuty"></div>
+                    </div>
+
+                    <div class="form-group" id="photoSection">
+                        <label>Photos (Optional)</label>
+                        <input type="file" id="p1" accept="image/*" style="margin-bottom:8px;">
+                        <input type="file" id="p2" accept="image/*">
+                    </div>
+
+                    <button type="submit" class="btn-submit">Submit Record</button>
+                </form>
             </div>
 
-            <div class="form-group">
-                <label>Name</label>
-                <input type="text" id="name" placeholder="Full Name" required>
+            <div id="loader">
+                <div class="spinner"></div>
+                <h3>Processing...</h3>
+                <p id="loaderText">Saving data to Google Sheets</p>
             </div>
 
-            <div class="form-group">
-                <label>Purpose of Visit</label>
-                <select id="purpose" required onchange="toggleOtherPurpose()">
-                    <option value="">Select Purpose</option>
-                    <option value="Meeting">Meeting</option>
-                    <option value="Delivery">Delivery</option>
-                    <option value="Interview">Interview</option>
-                    <option value="Service/Repair">Service/Repair</option>
-                    <option value="Personal Visit">Personal Visit</option>
-                    <option value="Official Work">Official Work</option>
-                    <option value="Other">Other</option>
-                </select>
+            <div id="success-page">
+                <h2 style="color: #28a745;">✓ Logged Successfully</h2>
+                <p id="successMessage">Entry has been recorded</p>
+                <a id="wa-link" href="" target="_blank" class="wa-btn">📱 Send WhatsApp Alert</a>
+                <br><br>
+                <button onclick="location.reload()" style="background:none; border:none; color:#007bff; cursor:pointer; text-decoration:underline; font-size:16px;">+ Add New Entry</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- RECORDS TAB -->
+    <div id="recordsTab" class="tab-content">
+        <div class="card">
+            <h2>Visitor Records</h2>
+            
+            <div class="filter-section">
+                <h3>Filters</h3>
+                <div class="filter-row">
+                    <div>
+                        <label style="font-size: 12px;">From Date</label>
+                        <input type="date" id="filterFromDate">
+                    </div>
+                    <div>
+                        <label style="font-size: 12px;">To Date</label>
+                        <input type="date" id="filterToDate">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label style="font-size: 12px;">Mobile Number</label>
+                    <input type="tel" id="filterMobile" maxlength="10" placeholder="Search by mobile">
+                </div>
+                <button class="btn-filter" onclick="loadRecords()">🔍 Apply Filters</button>
+                <button class="btn-clear btn-filter" onclick="clearFilters()">Clear Filters</button>
             </div>
 
-            <div class="form-group" id="otherPurposeDiv" style="display: none;">
-                <label>Specify Purpose</label>
-                <input type="text" id="otherPurpose" placeholder="Enter purpose details">
-            </div>
-
-            <div class="form-group">
-                <label>Status</label>
-                <div class="toggle-box">
-                    <input type="radio" id="in" name="status" value="IN" checked onchange="handleStatusChange()">
-                    <label for="in" class="t-label label-in">IN</label>
-                    <input type="radio" id="out" name="status" value="OUT" onchange="handleStatusChange()">
-                    <label for="out" class="t-label label-out">OUT</label>
+            <div id="recordsCount" class="records-count" style="display:none;"></div>
+            
+            <div id="recordsList" class="records-list">
+                <div class="no-records">
+                    <p>📋</p>
+                    <p>Click "Apply Filters" to load records</p>
                 </div>
             </div>
 
-            <div id="statusInfo" class="info-box" style="display:none;"></div>
-
-            <div class="form-group" id="photoSection">
-                <label>Photos (Optional)</label>
-                <input type="file" id="p1" accept="image/*" style="margin-bottom:8px;">
-                <input type="file" id="p2" accept="image/*">
+            <div id="recordsLoader" style="display:none;">
+                <div class="spinner"></div>
+                <p style="text-align:center;">Loading records...</p>
             </div>
-
-            <button type="submit" class="btn-submit">Submit Record</button>
-        </form>
+        </div>
     </div>
 
-    <div id="loader">
-        <div class="spinner"></div>
-        <h3>Processing...</h3>
-        <p id="loaderText">Saving data to Google Sheets</p>
-    </div>
-
-    <div id="success-page">
-        <h2 style="color: #28a745;">✓ Logged Successfully</h2>
-        <p id="successMessage">Entry has been recorded</p>
-        <a id="wa-link" href="" target="_blank" class="wa-btn">📱 Send WhatsApp Alert</a>
-        <br><br>
-        <button onclick="location.reload()" style="background:none; border:none; color:#007bff; cursor:pointer; text-decoration:underline; font-size:16px;">+ Add New Entry</button>
-    </div>
 </div>
 
 <script>
     // ============================================
-    // CONFIGURATION - UPDATE THIS URL
-    // ============================================
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwiR9jXli0NHzALb97UsNTZrcdJkAQJyoBRsjbs8YhoN3sQAiDMzkfNxtLe1PBQerXO/exec";
+// CONFIGURATION
+// ============================================
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxHXmP9lhhK7X1CiyFueJfvlRMdaF4QYJ0PxBQ9BJ2nvB-IrQndyMqQgrL45OsQwmBF/exec";
 
-    let lastSearchResult = null;
+let lastSearchResult = null;
+let currentGuard = {
+    name: '',
+    pin: ''
+};
 
-    // ============================================
-    // TOGGLE OTHER PURPOSE FIELD
-    // ============================================
-    function toggleOtherPurpose() {
-        const purposeSelect = document.getElementById('purpose');
-        const otherDiv = document.getElementById('otherPurposeDiv');
-        const otherInput = document.getElementById('otherPurpose');
-        
-        if (purposeSelect.value === 'Other') {
-            otherDiv.style.display = 'block';
-            otherInput.required = true;
-        } else {
-            otherDiv.style.display = 'none';
-            otherInput.required = false;
-            otherInput.value = '';
-        }
+// ============================================
+// LOGIN FUNCTIONS
+// ============================================
+document.getElementById('loginForm').onsubmit = async (e) => {
+    e.preventDefault();
+    
+    const name = document.getElementById('guardName').value.trim();
+    const pin = document.getElementById('guardPin').value;
+    
+    if(pin.length !== 4) {
+        showLoginError("PIN must be 4 digits");
+        return;
     }
-
-    // ============================================
-    // HANDLE STATUS CHANGE
-    // ============================================
-    function handleStatusChange() {
-        const status = document.querySelector('input[name="status"]:checked').value;
-        const infoBox = document.getElementById('statusInfo');
-        const photoSection = document.getElementById('photoSection');
-        const purposeSection = document.getElementById('purpose').closest('.form-group');
-        const otherPurposeDiv = document.getElementById('otherPurposeDiv');
-        const purposeSelect = document.getElementById('purpose');
-        const otherPurposeInput = document.getElementById('otherPurpose');
+    
+    try {
+        const response = await fetch(`${SCRIPT_URL}?action=validateGuard&name=${encodeURIComponent(name)}&pin=${pin}`);
+        const result = await response.json();
         
-        if (status === 'OUT') {
-            infoBox.style.display = 'block';
-            infoBox.innerHTML = '⚠️ OUT status will update the existing IN entry with exit time.';
-            photoSection.style.display = 'none'; // Hide photos for OUT
-            purposeSection.style.display = 'none'; // Hide purpose for OUT
-            otherPurposeDiv.style.display = 'none'; // Hide other purpose for OUT
-            purposeSelect.required = false; // Remove required validation
-            otherPurposeInput.required = false;
+        if(result.valid) {
+            currentGuard.name = name;
+            currentGuard.pin = pin;
+            sessionStorage.setItem('guardName', name);
+            sessionStorage.setItem('guardPin', pin);
+            showMainApp();
         } else {
-            infoBox.style.display = 'none';
-            photoSection.style.display = 'block'; // Show photos for IN
-            purposeSection.style.display = 'block'; // Show purpose for IN
-            purposeSelect.required = true; // Add required validation back
+            showLoginError(result.message || "Invalid credentials");
         }
+    } catch (error) {
+        showLoginError("Error connecting to server");
     }
+};
 
-    // ============================================
-    // SEARCH USER BY MOBILE NUMBER
-    // ============================================
-    async function searchUser() {
-        const mob = document.getElementById('mobile').value;
+function showLoginError(message) {
+    const errorDiv = document.getElementById('loginError');
+    errorDiv.innerText = message;
+    errorDiv.style.display = 'block';
+    setTimeout(() => { errorDiv.style.display = 'none'; }, 3000);
+}
+
+function showMainApp() {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('mainApp').style.display = 'block';
+    document.getElementById('contentWrapper').style.display = 'flex';
+    document.getElementById('guardOnDuty').innerText = currentGuard.name;
+}
+
+function logout() {
+    if(confirm('Are you sure you want to logout?')) {
+        sessionStorage.clear();
+        location.reload();
+    }
+}
+
+// Check session on load
+window.addEventListener('load', () => {
+    const savedName = sessionStorage.getItem('guardName');
+    const savedPin = sessionStorage.getItem('guardPin');
+    if(savedName && savedPin) {
+        currentGuard.name = savedName;
+        currentGuard.pin = savedPin;
+        showMainApp();
+    }
+});
+
+// ============================================
+// TAB SWITCHING
+// ============================================
+function switchTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    // Use currentTarget to correctly identify the button clicked
+    event.currentTarget.classList.add('active');
+
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    document.getElementById(tab + 'Tab').classList.add('active');
+}
+
+// ============================================
+// ENTRY FORM FUNCTIONS
+// ============================================
+function toggleOtherPurpose() {
+    const isOther = document.getElementById('purpose').value === 'Other';
+    const otherDiv = document.getElementById('otherPurposeDiv');
+    otherDiv.style.display = isOther ? 'block' : 'none';
+    document.getElementById('otherPurpose').required = isOther;
+}
+
+function handleStatusChange() {
+    const status = document.querySelector('input[name="status"]:checked').value;
+    const infoBox = document.getElementById('statusInfo');
+    const photoSection = document.getElementById('photoSection');
+    const purposeGroup = document.getElementById('purposeGroup');
+    
+    if (status === 'OUT') {
+        infoBox.style.display = 'block';
+        infoBox.innerHTML = '⚠️ OUT status will update the existing IN entry.';
+        photoSection.style.display = 'none';
+        purposeGroup.style.display = 'none';
+        document.getElementById('purpose').required = false;
+    } else {
+        infoBox.style.display = 'none';
+        photoSection.style.display = 'block';
+        purposeGroup.style.display = 'block';
+        document.getElementById('purpose').required = true;
+    }
+}
+
+async function searchUser() {
+    const mob = document.getElementById('mobile').value;
+    if(mob.length !== 10) { alert("Enter 10 digits"); return; }
+    
+    const sm = document.getElementById('sm');
+    sm.innerText = "Searching...";
+    
+    try {
+        const response = await fetch(`${SCRIPT_URL}?action=search&mobile=${mob}`);
+        const result = await response.json();
+        lastSearchResult = result;
         
-        // Validate mobile number
-        if(mob.length !== 10) {
-            alert("Please enter 10 digits");
-            return;
-        }
-        
-        const smElement = document.getElementById('sm');
-        smElement.innerText = "Searching...";
-        smElement.style.color = "#666";
-        
-        try {
-            const response = await fetch(`${SCRIPT_URL}?action=search&mobile=${mob}`, {
-                method: "GET"
-            });
-            
-            const result = await response.json();
-            lastSearchResult = result;
-            
-            if(result.found) {
-                document.getElementById('name').value = result.name;
-                
-                if(result.hasActiveEntry) {
-                    smElement.innerHTML = `✓ Found: ${result.name}<br><small style="color:#ff9800;">Active entry since ${result.inTime}</small>`;
-                    smElement.style.color = "green";
-                } else {
-                    smElement.innerText = "✓ Found: " + result.name;
-                    smElement.style.color = "green";
-                }
-            } else {
-                document.getElementById('name').value = "";
-                smElement.innerText = "New Visitor";
-                smElement.style.color = "blue";
-                lastSearchResult = null;
-            }
-        } catch (error) {
-            console.error("Search error:", error);
-            smElement.innerText = "Error searching. Please try again.";
-            smElement.style.color = "red";
+        if(result.found) {
+            document.getElementById('name').value = result.name;
+            sm.style.color = result.hasActiveEntry ? "orange" : "green";
+            sm.innerText = result.hasActiveEntry ? `✓ Active entry since ${result.inTime}` : `✓ Registered: ${result.name}`;
+        } else {
+            document.getElementById('name').value = "";
+            sm.innerText = "New Visitor";
+            sm.style.color = "blue";
             lastSearchResult = null;
         }
+    } catch (e) {
+        sm.innerText = "Search failed.";
+        sm.style.color = "red";
+    }
+}
+
+document.getElementById('entryForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const status = document.querySelector('input[name="status"]:checked').value;
+    
+    if(status === 'OUT' && (!lastSearchResult || !lastSearchResult.hasActiveEntry)) {
+        alert("⚠️ No active entry found for this number. Search first.");
+        return;
     }
 
-    // ============================================
-    // FORM SUBMISSION
-    // ============================================
-    document.getElementById('entryForm').onsubmit = async (e) => {
-        e.preventDefault();
-        
-        const status = document.querySelector('input[name="status"]:checked').value;
-        
-        // Validate OUT status
-        if(status === 'OUT') {
-            if(!lastSearchResult || !lastSearchResult.hasActiveEntry) {
-                alert("⚠️ No active IN entry found for this mobile number. Please search first or select IN status.");
-                return;
-            }
-        }
-        
-        // Show loader
-        document.getElementById('form-content').style.display = 'none';
-        document.getElementById('loader').style.display = 'block';
-        
-        if(status === 'OUT') {
-            document.getElementById('loaderText').innerText = 'Updating exit time...';
-        } else {
-            document.getElementById('loaderText').innerText = 'Creating new entry...';
-        }
+    document.getElementById('form-content').style.display = 'none';
+    document.getElementById('loader').style.display = 'block';
 
-        // Get purpose value (only for IN status)
-        let finalPurpose = '';
-        if(status === 'IN') {
-            const purposeValue = document.getElementById('purpose').value;
-            finalPurpose = purposeValue === 'Other' 
-                ? document.getElementById('otherPurpose').value 
-                : purposeValue;
-        }
-
-        // Prepare payload
-        const payload = {
-            mobile: document.getElementById('mobile').value,
-            name: document.getElementById('name').value,
-            purpose: finalPurpose,
-            status: status,
-            photo1: null,
-            photo2: null
-        };
-
-        try {
-            // Only compress images for IN status
-            if(status === 'IN') {
-                const f1 = document.getElementById('p1').files[0];
-                if (f1) {
-                    payload.photo1 = await compressImg(f1);
-                }
-                
-                const f2 = document.getElementById('p2').files[0];
-                if (f2) {
-                    payload.photo2 = await compressImg(f2);
-                }
-            }
-
-            // Send data to Google Apps Script
-            const response = await fetch(SCRIPT_URL, {
-                method: "POST",
-                body: JSON.stringify({
-                    action: 'submit',
-                    data: payload
-                })
-            });
-
-            const result = await response.json();
-            
-            if(result.status === 'success') {
-                // Show success page
-                document.getElementById('loader').style.display = 'none';
-                document.getElementById('success-page').style.display = 'block';
-                
-                if(status === 'OUT') {
-                    document.getElementById('successMessage').innerText = 'Exit time recorded successfully';
-                } else {
-                    document.getElementById('successMessage').innerText = 'Entry recorded successfully';
-                }
-                
-                // Set WhatsApp link from server response
-                if(result.waLink) {
-                    document.getElementById('wa-link').href = result.waLink;
-                } else {
-                    // Fallback manual link
-                    const msg = `${status} Entry: ${payload.name} (${payload.mobile})\nPurpose: ${payload.purpose}`;
-                    document.getElementById('wa-link').href = "https://wa.me/919876543210?text=" + encodeURIComponent(msg);
-                }
-            } else {
-                throw new Error(result.message || "Submission failed");
-            }
-        } catch (error) {
-            console.error("Submission error:", error);
-            document.getElementById('loader').style.display = 'none';
-            document.getElementById('form-content').style.display = 'block';
-            alert("Error submitting form: " + error.message);
-        }
+    const payload = {
+        mobile: document.getElementById('mobile').value,
+        name: document.getElementById('name').value,
+        purpose: document.getElementById('purpose').value === 'Other' ? document.getElementById('otherPurpose').value : document.getElementById('purpose').value,
+        status: status,
+        guardName: currentGuard.name,
+        photo1: null, photo2: null
     };
 
-    // ============================================
-    // IMAGE COMPRESSION
-    // ============================================
-    async function compressImg(file) {
-        return new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = (e) => {
-                const img = new Image();
-                img.src = e.target.result;
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const maxSize = 800;
-                    let width = img.width;
-                    let height = img.height;
-                    
-                    // Resize if image is larger than maxSize
-                    if (width > maxSize || height > maxSize) {
-                        if (width > height) {
-                            height = Math.round(height * (maxSize / width));
-                            width = maxSize;
-                        } else {
-                            width = Math.round(width * (maxSize / height));
-                            height = maxSize;
-                        }
-                    }
-                    
-                    canvas.width = width;
-                    canvas.height = height;
-                    canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-                    
-                    resolve({
-                        data: canvas.toDataURL('image/jpeg', 0.6).split(',')[1],
-                        type: 'image/jpeg'
-                    });
-                };
-            };
+    try {
+        if(status === 'IN') {
+            const f1 = document.getElementById('p1').files[0];
+            const f2 = document.getElementById('p2').files[0];
+            if(f1) payload.photo1 = await compressImg(f1);
+            if(f2) payload.photo2 = await compressImg(f2);
+        }
+
+        const res = await fetch(SCRIPT_URL, {
+            method: "POST",
+            body: JSON.stringify({ action: 'submit', data: payload })
         });
+        const result = await res.json();
+        
+        if(result.status === 'success') {
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('success-page').style.display = 'block';
+            document.getElementById('wa-link').href = result.waLink || `https://wa.me/?text=Entry logged for ${payload.name}`;
+        } else { throw new Error(result.message); }
+    } catch (err) {
+        alert("Error: " + err.message);
+        document.getElementById('loader').style.display = 'none';
+        document.getElementById('form-content').style.display = 'block';
     }
+};
+
+// CORRECTED IMAGE COMPRESSION
+async function compressImg(file) {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (e) => {
+            const img = new Image();
+            img.src = e.target.result;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const maxSize = 800;
+                let width = img.width;
+                let height = img.height;
+                
+                if (width > height) {
+                    if (width > maxSize) {
+                        height *= maxSize / width;
+                        width = maxSize;
+                    }
+                } else {
+                    if (height > maxSize) {
+                        width *= maxSize / height;
+                        height = maxSize;
+                    }
+                }
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                resolve({
+                    data: canvas.toDataURL('image/jpeg', 0.6).split(',')[1],
+                    type: 'image/jpeg'
+                });
+            };
+        };
+    });
+}
+
+// ============================================
+// RECORDS TAB FUNCTIONS
+// ============================================
+async function loadRecords() {
+    const fromDate = document.getElementById('filterFromDate').value;
+    const toDate = document.getElementById('filterToDate').value;
+    const mobile = document.getElementById('filterMobile').value;
+
+    document.getElementById('recordsList').style.display = 'none';
+    document.getElementById('recordsLoader').style.display = 'block';
+
+    try {
+        let url = `${SCRIPT_URL}?action=getRecords&fromDate=${fromDate}&toDate=${toDate}&mobile=${mobile}`;
+        const response = await fetch(url);
+        const result = await response.json();
+
+        document.getElementById('recordsLoader').style.display = 'none';
+        document.getElementById('recordsList').style.display = 'block';
+
+        if(result.status === 'success' && result.records.length > 0) {
+            displayRecords(result.records);
+        } else {
+            document.getElementById('recordsList').innerHTML = '<div class="no-records">No records found</div>';
+        }
+    } catch (e) {
+        document.getElementById('recordsLoader').style.display = 'none';
+        document.getElementById('recordsList').innerHTML = '<div class="no-records">Error loading data</div>';
+    }
+}
+
+function displayRecords(records) {
+    const countDiv = document.getElementById('recordsCount');
+    countDiv.style.display = 'block';
+    countDiv.innerText = `Found ${records.length} record(s)`;
+
+    const html = records.map(r => `
+        <div class="record-card">
+            <div class="record-header">
+                <div class="record-name">${r.name}</div>
+                <span class="status-badge ${r.status === 'OUT' ? 'status-out' : 'status-in'}">${r.status}</span>
+            </div>
+            <div class="record-details">
+                <div><strong>Mobile:</strong> ${r.mobile}</div>
+                <div><strong>In:</strong> ${r.inTime}</div>
+                ${r.outTime ? `<div><strong>Out:</strong> ${r.outTime}</div>` : ''}
+            </div>
+        </div>
+    `).join('');
+    document.getElementById('recordsList').innerHTML = html;
+}
+
+function clearFilters() {
+    document.getElementById('filterFromDate').value = '';
+    document.getElementById('filterMobile').value = '';
+    loadRecords();
+}
 </script>
 </body>
 </html>
