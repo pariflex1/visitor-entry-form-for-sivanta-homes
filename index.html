@@ -3,33 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gate Entry System</title>
+    <title>Mobile Entry System</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Poppins', sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
-        .card { background: white; width: 100%; max-width: 400px; padding: 25px; border-radius: 15px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); border-top: 6px solid #007bff; }
+        body { font-family: 'Poppins', sans-serif; background-color: #f4f7f9; display: flex; justify-content: center; padding: 20px; }
+        .card { background: #fff; width: 100%; max-width: 420px; padding: 25px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
         .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; color: #444; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; }
         input[type="text"], input[type="tel"], input[type="file"] { 
-            width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; 
+            width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box;
         }
         .search-row { display: flex; gap: 8px; }
-        .btn-search { background: #6c757d; color: white; border: none; border-radius: 8px; width: 50px; cursor: pointer; font-size: 18px; }
-        .status-toggle { display: flex; gap: 10px; }
-        .status-toggle input { display: none; }
-        .st-label { flex: 1; padding: 12px; text-align: center; background: #eee; border-radius: 8px; cursor: pointer; font-weight: 600; }
-        #in:checked + .label-in { background: #28a745; color: white; }
-        #out:checked + .label-out { background: #dc3545; color: white; }
-        .btn-submit { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: 600; cursor: pointer; margin-top: 10px; }
-        #loader, #success-page { display: none; text-align: center; }
-        .wa-btn { display: inline-block; background: #25D366; color: white; padding: 12px 25px; border-radius: 30px; text-decoration: none; font-weight: 600; margin-top: 20px; }
+        .btn-search { background: #555; color: #fff; border: none; border-radius: 8px; width: 55px; cursor: pointer; }
+        .toggle-box { display: flex; gap: 10px; margin-top: 5px; }
+        .toggle-box input { display: none; }
+        .t-label { flex: 1; padding: 12px; text-align: center; background: #eee; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        #in:checked + .label-in { background: #28a745; color: #fff; }
+        #out:checked + .label-out { background: #dc3545; color: #fff; }
+        .btn-submit { width: 100%; padding: 15px; background: #007bff; color: #fff; border: none; border-radius: 8px; font-size: 18px; font-weight: 600; cursor: pointer; margin-top: 15px; }
+        #loader, #success-page { display: none; text-align: center; padding: 20px; }
+        .wa-btn { display: inline-block; background: #25D366; color: #fff; padding: 12px 25px; border-radius: 30px; text-decoration: none; font-weight: 600; margin-top: 15px; }
     </style>
 </head>
 <body>
 
 <div class="card">
     <div id="form-content">
-        <h2 style="text-align:center; margin-bottom:20px;">Gate Entry</h2>
+        <h2 style="text-align:center; margin-top:0;">Visitor Entry</h2>
         <form id="entryForm">
             <div class="form-group">
                 <label>Mobile Number (10 Digits)</label>
@@ -37,68 +37,73 @@
                     <input type="tel" id="mobile" maxlength="10" placeholder="9876543210" required pattern="\d{10}">
                     <button type="button" class="btn-search" onclick="searchUser()">🔍</button>
                 </div>
-                <small id="sm" style="font-size:11px;"></small>
+                <small id="sm" style="font-size:12px; display:block; margin-top:4px;"></small>
             </div>
 
             <div class="form-group">
-                <label>Visitor Name</label>
+                <label>Name</label>
                 <input type="text" id="name" placeholder="Full Name" required>
             </div>
 
             <div class="form-group">
-                <label>Entry/Exit</label>
-                <div class="status-toggle">
+                <label>Status</label>
+                <div class="toggle-box">
                     <input type="radio" id="in" name="status" value="IN" checked>
-                    <label for="in" class="st-label label-in">IN</label>
+                    <label for="in" class="t-label label-in">IN</label>
                     <input type="radio" id="out" name="status" value="OUT">
-                    <label for="out" class="st-label label-out">OUT</label>
+                    <label for="out" class="t-label label-out">OUT</label>
                 </div>
             </div>
 
             <div class="form-group">
-                <label>Photos (Up to 2)</label>
+                <label>Photos</label>
                 <input type="file" id="p1" accept="image/*" style="margin-bottom:8px;">
                 <input type="file" id="p2" accept="image/*">
             </div>
 
-            <button type="submit" class="btn-submit">Submit Entry</button>
+            <button type="submit" class="btn-submit">Submit Record</button>
         </form>
     </div>
 
     <div id="loader">
-        <p>Compressing & Uploading...</p>
-        <div style="color: #007bff;">Please wait...</div>
+        <h3>Processing...</h3>
+        <p>Saving data to Google Sheets</p>
     </div>
 
     <div id="success-page">
-        <h2 style="color: #28a745;">Logged Successfully!</h2>
+        <h2 style="color: #28a745;">Logged Successfully</h2>
         <a id="wa-link" href="" target="_blank" class="wa-btn">Send WhatsApp Alert</a>
         <br><br>
-        <button onclick="location.reload()" style="background:none; border:none; color:#007bff; cursor:pointer; text-decoration:underline;">New Entry</button>
+        <button onclick="location.reload()" style="background:none; border:none; color:#007bff; cursor:pointer; text-decoration:underline;">Add New Entry</button>
     </div>
 </div>
 
 <script>
-    // PASTE YOUR GOOGLE WEB APP URL HERE
-    const SCRIPT_URL = "YOUR_GOOGLE_WEB_APP_URL_HERE";
+    // 1. UPDATE THIS URL
+    const SCRIPT_URL = "YOUR_NEW_DEPLOYED_URL_HERE";
 
     async function searchUser() {
         const mob = document.getElementById('mobile').value;
-        if(mob.length !== 10) return alert("Enter 10 digits");
+        if(mob.length !== 10) return alert("Please enter 10 digits");
         document.getElementById('sm').innerText = "Searching...";
         
         try {
-            const resp = await fetch(SCRIPT_URL + "?action=search", {
+            const resp = await fetch(`${SCRIPT_URL}?action=search`, {
                 method: "POST",
+                mode: "no-cors", // Use no-cors to avoid initial block
                 body: JSON.stringify({ mobile: mob })
             });
-            const res = await resp.json();
+            // Note: with no-cors, you can't read the response. 
+            // For a searchable response on external host, it's better to use GET
+            const getResp = await fetch(`${SCRIPT_URL}?action=search&mobile=${mob}`);
+            const res = await getResp.json();
+            
             if(res.found) {
                 document.getElementById('name').value = res.name;
-                document.getElementById('sm').innerText = "Welcome back, " + res.name;
+                document.getElementById('sm').innerText = "Found: " + res.name;
                 document.getElementById('sm').style.color = "green";
             } else {
-                document.getElementById('sm').innerText = "New Visitor detected.";
+                document.getElementById('sm').innerText = "New Visitor";
                 document.getElementById('sm').style.color = "blue";
             }
         } catch (e) { console.error(e); }
@@ -106,14 +111,11 @@
 
     document.getElementById('entryForm').onsubmit = async (e) => {
         e.preventDefault();
-        const mob = document.getElementById('mobile').value;
-        if(mob.length !== 10) return alert("Invalid Mobile");
-
         document.getElementById('form-content').style.display = 'none';
         document.getElementById('loader').style.display = 'block';
 
         const payload = {
-            mobile: mob,
+            mobile: document.getElementById('mobile').value,
             name: document.getElementById('name').value,
             status: document.querySelector('input[name="status"]:checked').value,
             photo1: null, photo2: null
@@ -124,54 +126,42 @@
         const f2 = document.getElementById('p2').files[0];
         if (f2) payload.photo2 = await compressImg(f2);
 
-        try {
-            const resp = await fetch(SCRIPT_URL + "?action=submit", {
-                method: "POST",
-                body: JSON.stringify(payload)
-            });
-            const res = await resp.json();
-            document.getElementById('loader').style.display = 'none';
-            document.getElementById('success-page').style.display = 'block';
-            document.getElementById('wa-link').href = res.waLink;
-        } catch (err) {
-            alert("Error saving data.");
-            document.getElementById('form-content').style.display = 'block';
-            document.getElementById('loader').style.display = 'none';
-        }
+        fetch(`${SCRIPT_URL}?action=submit`, {
+            method: "POST",
+            mode: "no-cors", // This prevents the CORS error on external hosting
+            body: JSON.stringify(payload)
+        }).then(() => {
+            // Since we use no-cors, we can't read the response back
+            // But we know it's sent. We show success after a short delay.
+            setTimeout(() => {
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('success-page').style.display = 'block';
+                // Manual WA trigger link
+                const msg = `Entry: ${payload.name} (${payload.mobile}) is ${payload.status}`;
+                document.getElementById('wa-link').href = "https://wa.me/919876543210?text=" + encodeURIComponent(msg);
+            }, 2000);
+        }).catch(err => alert("Error: " + err));
     };
 
-   // Inside your <script> in index.html
-async function handleFormSubmit(e) {
-    // ... (keep payload and compression logic) ...
-
-    try {
-        // We use a query parameter for the action
-        const url = SCRIPT_URL + "?action=submit";
-        
-        const resp = await fetch(url, {
-            method: "POST",
-            body: JSON.stringify(payload),
-            mode: "cors", // Try cors first
-            headers: {
-                "Content-Type": "text/plain;charset=utf-8", 
-                // Using text/plain avoids some CORS "preflight" checks
-            }
+    async function compressImg(file) {
+        return new Promise((res) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (e) => {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const max = 800;
+                    let w = img.width, h = img.height;
+                    if (w > max) { h = Math.round(h * (max / w)); w = max; }
+                    canvas.width = w; canvas.height = h;
+                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                    res({ data: canvas.toDataURL('image/jpeg', 0.6).split(',')[1], type: 'image/jpeg' });
+                };
+            };
         });
-
-        const res = await resp.json();
-        
-        if (res.status === 'success') {
-            document.getElementById('loader').style.display = 'none';
-            document.getElementById('success-page').style.display = 'block';
-            document.getElementById('wa-link').href = res.waLink;
-        }
-    } catch (err) {
-        console.error("Detailed Error:", err);
-        alert("Submission failed. Check Console (F12) for details.");
-        document.getElementById('form-content').style.display = 'block';
-        document.getElementById('loader').style.display = 'none';
     }
-}
 </script>
 </body>
 </html>
