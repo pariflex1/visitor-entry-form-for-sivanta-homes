@@ -10,38 +10,20 @@
         body { font-family: 'Poppins', sans-serif; background: #f4f7f9; margin: 0; }
         .tab-container { background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
         .tabs { display: flex; max-width: 480px; margin: 0 auto; }
-        .tab-btn { flex: 1; padding: 16px; border: none; background: none; font-weight: 600; color: #666; cursor: pointer; border-bottom: 3px solid transparent; }
-        .tab-btn.active { color: #007bff; border-bottom-color: #007bff; }
+        .tab-btn { flex: 1; padding: 16px; border: none; background: #eee; font-weight: 600; color: #888; cursor: pointer; border-bottom: 4px solid transparent; }
+        .tab-btn.active { color: #007bff; background: #fff; border-bottom: 4px solid #007bff; }
         .card { background: #fff; max-width: 480px; margin: 15px auto; padding: 20px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .form-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 13px; color: #555; }
         input, select { width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 10px; font-size: 16px; }
         .btn-submit { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; }
         .record-card { border: 1px solid #eee; padding: 12px; border-radius: 12px; margin-bottom: 10px; }
-        .btn-out { background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 600; float: right; cursor: pointer; }
+        .btn-out { background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 8px; font-weight: 600; float: right; cursor: pointer; }
+        .wa-send-btn { background: #25D366; color: white; border: none; padding: 8px 12px; border-radius: 8px; font-weight: 600; float: right; cursor: pointer; }
         #loader { display: none; text-align: center; padding: 20px; }
-        .wa-btn { display: block; text-align: center; background: #25D366; color: white; padding: 15px; border-radius: 10px; text-decoration: none; font-weight: 600; margin-top: 20px; }
-    /* Active Tab Styling */
-.tab-btn {
-    flex: 1; padding: 16px; border: none; background: #eee;
-    font-weight: 600; color: #888; cursor: pointer;
-    border-bottom: 4px solid transparent;
-}
-.tab-btn.active {
-    color: #007bff;
-    background: #fff;
-    border-bottom: 4px solid #007bff; /* Indicator for active tab */
-}
-
-/* Search Spinner */
-.search-wrapper { position: relative; width: 100%; }
-#searchLoader {
-    display: none; position: absolute; right: 10px; top: 12px;
-    width: 20px; height: 20px;
-    border: 3px solid #f3f3f3; border-top: 3px solid #007bff;
-    border-radius: 50%; animation: spin 1s linear infinite;
-}
-@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .search-wrapper { position: relative; width: 100%; }
+        #searchLoader { display: none; position: absolute; right: 10px; top: 12px; width: 20px; height: 20px; border: 3px solid #f3f3f3; border-top: 3px solid #007bff; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
@@ -66,17 +48,18 @@
         <div class="card" id="formDiv">
             <h2>Visitor Check-in</h2>
             <div class="form-group">
-    <label>Mobile Number</label>
-    <div class="search-wrapper">
-        <input type="tel" id="mobile" maxlength="10" placeholder="10 Digits" oninput="handleAutoSearch(this)">
-        <div id="searchLoader"></div> </div>
-    <small id="searchStatus"></small>
-</div>
-<div class="form-group"><label>Name</label><input type="text" id="name"></div>
+                <label>Mobile Number</label>
+                <div class="search-wrapper">
+                    <input type="tel" id="mobile" maxlength="10" placeholder="10 Digits" oninput="handleAutoSearch(this)">
+                    <div id="searchLoader"></div>
+                </div>
+                <small id="searchStatus" style="font-weight:600;"></small>
+            </div>
+            <div class="form-group"><label>Name</label><input type="text" id="name"></div>
             <div class="form-group">
                 <label>Purpose</label>
                 <select id="purpose" onchange="toggleOther()">
-                    <option>Meeting</option><option>Delivery</option><option>Interview</option><option>Courier</option><option>Maintenance</option><option>Contractor</option><option>Service</option><option>Official Work</option><option>Guest</option><option>Sales</option><option>Other</option>
+                    <option>Personal Meeting</option><option>Delivery</option><option>Business</option><option>Maintenance</option><option>Courier</option><option>Interview</option><option>Guest</option><option>Other</option>
                 </select>
             </div>
             <div id="otherDiv" style="display:none;" class="form-group"><input type="text" id="otherPurpose" placeholder="Specify..."></div>
@@ -87,7 +70,7 @@
         <div id="loader" class="card"><h3>Processing...</h3></div>
         <div id="successDiv" class="card" style="display:none; text-align:center;">
             <h2 style="color:green">✓ Recorded</h2>
-            <a id="wa-link" href="#" target="_blank" class="wa-btn">📱 Send WhatsApp</a>
+            <a id="wa-link" href="#" target="_blank" style="display:block; background:#25D366; color:white; padding:15px; border-radius:10px; text-decoration:none; font-weight:600;">📱 Send WhatsApp</a>
             <button onclick="location.reload()" class="btn-submit" style="background:#666; margin-top:10px;">New Entry</button>
         </div>
     </div>
@@ -106,96 +89,93 @@
 </div>
 
 <script>
-const URL = "https://script.google.com/macros/s/AKfycby24z5wrZd9Z9-5a4YMZwy5Wty0ORe72pzr2o8OORd77urv9EhRnBcQzvL17pZaoA8J/exec";
+const URL = "https://script.google.com/macros/s/AKfycbw_J3sYoB63FzfsjH0vxZtPPSkx8mRrsY32lNIZCPnBa1hvMzF6H92ush3vBa-Xf-9n/exec";
 
-// 1. PERSISTENT LOGIN
 window.onload = () => { if(localStorage.getItem('guard')) showApp(); };
 function login() { localStorage.setItem('guard', document.getElementById('gName').value); showApp(); }
 function showApp() { document.getElementById('loginScreen').style.display='none'; document.getElementById('mainApp').style.display='block'; }
-function logout() { localStorage.clear(); location.reload(); }
+function logout() { if (confirm("Are you sure you want to logout?")) { localStorage.clear(); location.reload(); } }
 
-// 2. Auto-Search with Spinner
 async function handleAutoSearch(el) {
     const status = document.getElementById('searchStatus');
     const loader = document.getElementById('searchLoader');
-    
     if(el.value.length === 10) {
-        loader.style.display = 'block'; // Show spinner
+        loader.style.display = 'block';
         status.innerText = "Processing...";
-        
         try {
             const res = await fetch(`${URL}?action=search&mobile=${el.value}`);
             const data = await res.json();
-            loader.style.display = 'none'; // Hide spinner
-            
+            loader.style.display = 'none';
             if(data.found) {
                 document.getElementById('name').value = data.name;
-                status.innerText = "✓ Welcome back, " + data.name;
-                status.style.color = "green";
-            } else {
-                status.innerText = "New Visitor";
-                status.style.color = "#007bff";
-            }
-        } catch(e) {
-            loader.style.display = 'none';
-            status.innerText = "Search failed";
-        }
-    } else {
-        status.innerText = "";
-        loader.style.display = 'none';
-    }
+                status.innerText = "✓ Found: " + data.name; status.style.color = "green";
+            } else { status.innerText = "New Visitor"; status.style.color = "#007bff"; }
+        } catch(e) { loader.style.display = 'none'; status.innerText = "Error"; }
+    } else { status.innerText = ""; loader.style.display = 'none'; }
 }
 
-
-
-// 3. RECORDS & OUT LOGIC
 async function loadRecords() {
     const res = await fetch(`${URL}?action=getRecords&from=${document.getElementById('fromD').value}&to=${document.getElementById('toD').value}&mobile=${document.getElementById('searchM').value}`);
     const data = await res.json();
-    
     document.getElementById('recordsList').innerHTML = data.records.map(r => `
         <div class="record-card" style="border-left: 5px solid ${r.status === 'IN' ? '#28a745' : '#dc3545'}">
-            ${r.status === 'IN' ? `<button class="btn-out" onclick="processOut('${r.mobile}')">OUT</button>` : ''}
+            <div class="action-area" style="float:right;">
+                ${r.status === 'IN' ? `<button class="btn-out" onclick="processOut('${r.mobile}', this)">OUT</button>` : ''}
+            </div>
             <strong>${r.name}</strong> <br>
             <small>${r.mobile} | ${r.purpose}</small><br>
-            <small>IN: ${r.inTime} (${r.guard})</small>
-            ${r.status === 'OUT' ? `
-                <br><small style="color:#dc3545">OUT: ${r.outTime}</small>
-                <br><small><b>Duration: ${r.duration || 'N/A'}</b></small> 
-            ` : ''}
+            <small>IN: ${r.inTime}</small>
+            ${r.status === 'OUT' ? `<br><small style="color:#dc3545">OUT: ${r.outTime}</small><br><small><b>Duration: ${r.duration || 'N/A'}</b></small>` : ''}
         </div>
     `).join('') || '<p style="text-align:center">No records found</p>';
 }
 
-async function processOut(m) {
-    const res = await fetch(URL, { method: "POST", body: JSON.stringify({ action: 'processOut', data: { mobile: m, guard: localStorage.getItem('guard') } }) });
-    const result = await res.json();
-    if(result.status === 'success') { window.open(result.waLink, '_blank'); loadRecords(); }
+async function processOut(mobile, btnElement) {
+    if(!confirm("Confirm exit and prepare WhatsApp?")) return;
+    
+    btnElement.innerText = "Saving...";
+    btnElement.disabled = true;
+
+    try {
+        const response = await fetch(URL, { 
+            method: "POST", 
+            body: JSON.stringify({ 
+                action: 'processOut', 
+                data: { 
+                    mobile: mobile, 
+                    guardName: localStorage.getItem('guard') // Make sure this matches your login key
+                } 
+            }) 
+        });
+        
+        const result = await response.json();
+        
+        if(result.status === 'success') {
+            // Replace button with the "Send WhatsApp" option
+            btnElement.parentElement.innerHTML = `
+                <button class="wa-send-btn" onclick="window.open('${result.waLink}', '_blank')">
+                    📱 Send WhatsApp
+                </button>
+            `;
+        } else {
+            alert("Error: " + result.message);
+            btnElement.innerText = "OUT";
+            btnElement.disabled = false;
+        }
+    } catch(e) {
+        alert("Failed to connect to server.");
+        btnElement.innerText = "OUT";
+        btnElement.disabled = false;
+    }
 }
 
 async function submitEntry() {
-    document.getElementById('formDiv').style.display='none';
-    document.getElementById('loader').style.display='block';
-    
-    const p1 = document.getElementById('p1').files[0];
-    const p2 = document.getElementById('p2').files[0];
-    
-    const payload = {
-        action: 'submit',
-        data: {
-            name: document.getElementById('name').value,
-            mobile: document.getElementById('mobile').value,
-            purpose: document.getElementById('purpose').value==='Other' ? document.getElementById('otherPurpose').value : document.getElementById('purpose').value,
-            guard: localStorage.getItem('guard'),
-            p1: p1 ? await compress(p1) : null,
-            p2: p2 ? await compress(p2) : null
-        }
-    };
-
+    document.getElementById('formDiv').style.display='none'; document.getElementById('loader').style.display='block';
+    const p1 = document.getElementById('p1').files[0]; const p2 = document.getElementById('p2').files[0];
+    const payload = { action: 'submit', data: { name: document.getElementById('name').value, mobile: document.getElementById('mobile').value, purpose: document.getElementById('purpose').value==='Other' ? document.getElementById('otherPurpose').value : document.getElementById('purpose').value, guard: localStorage.getItem('guard'), p1: p1 ? await compress(p1) : null, p2: p2 ? await compress(p2) : null } };
     const res = await fetch(URL, { method: "POST", body: JSON.stringify(payload) });
     const result = await res.json();
-    document.getElementById('loader').style.display='none';
-    document.getElementById('successDiv').style.display='block';
+    document.getElementById('loader').style.display='none'; document.getElementById('successDiv').style.display='block';
     document.getElementById('wa-link').href = result.waLink;
 }
 
@@ -205,29 +185,21 @@ function compress(f) {
         reader.onload = e => {
             const img = new Image(); img.src = e.target.result;
             img.onload = () => {
-                const canvas = document.createElement('canvas');
-                const max = 600; let w = img.width, h = img.height;
+                const canvas = document.createElement('canvas'); const max = 600; let w = img.width, h = img.height;
                 if(w > h) { if(w > max) { h *= max/w; w = max; } } else { if(h > max) { w *= max/h; h = max; } }
-                canvas.width = w; canvas.height = h;
-                canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                canvas.width = w; canvas.height = h; canvas.getContext('2d').drawImage(img, 0, 0, w, h);
                 res({ data: canvas.toDataURL('image/jpeg', 0.4).split(',')[1], type: 'image/jpeg' });
             }
         }
     });
 }
 
-// 1. Tab Switching with Active Indicator
 function switchTab(tabId) {
-    // Hide all contents
     document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
-    // Remove active class from all buttons
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    
-    // Show selected tab and highlight button
     document.getElementById(tabId + 'Tab').style.display = 'block';
     const activeBtn = document.querySelector(`[onclick="switchTab('${tabId}')"]`);
     if(activeBtn) activeBtn.classList.add('active');
-    
     if(tabId === 'records') loadRecords();
 }
 
