@@ -21,6 +21,27 @@
         .btn-out { background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 600; float: right; cursor: pointer; }
         #loader { display: none; text-align: center; padding: 20px; }
         .wa-btn { display: block; text-align: center; background: #25D366; color: white; padding: 15px; border-radius: 10px; text-decoration: none; font-weight: 600; margin-top: 20px; }
+    /* Active Tab Styling */
+.tab-btn {
+    flex: 1; padding: 16px; border: none; background: #eee;
+    font-weight: 600; color: #888; cursor: pointer;
+    border-bottom: 4px solid transparent;
+}
+.tab-btn.active {
+    color: #007bff;
+    background: #fff;
+    border-bottom: 4px solid #007bff; /* Indicator for active tab */
+}
+
+/* Search Spinner */
+.search-wrapper { position: relative; width: 100%; }
+#searchLoader {
+    display: none; position: absolute; right: 10px; top: 12px;
+    width: 20px; height: 20px;
+    border: 3px solid #f3f3f3; border-top: 3px solid #007bff;
+    border-radius: 50%; animation: spin 1s linear infinite;
+}
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
@@ -45,11 +66,13 @@
         <div class="card" id="formDiv">
             <h2>Visitor Check-in</h2>
             <div class="form-group">
-                <label>Mobile Number</label>
-                <input type="tel" id="mobile" maxlength="10" placeholder="Auto-search..." oninput="autoSearch(this)">
-                <small id="sm"></small>
-            </div>
-            <div class="form-group"><label>Name</label><input type="text" id="name"></div>
+    <label>Mobile Number</label>
+    <div class="search-wrapper">
+        <input type="tel" id="mobile" maxlength="10" placeholder="10 Digits" oninput="handleAutoSearch(this)">
+        <div id="searchLoader"></div> </div>
+    <small id="searchStatus"></small>
+</div>
+<div class="form-group"><label>Name</label><input type="text" id="name"></div>
             <div class="form-group">
                 <label>Purpose</label>
                 <select id="purpose" onchange="toggleOther()">
@@ -91,14 +114,39 @@ function login() { localStorage.setItem('guard', document.getElementById('gName'
 function showApp() { document.getElementById('loginScreen').style.display='none'; document.getElementById('mainApp').style.display='block'; }
 function logout() { localStorage.clear(); location.reload(); }
 
-// 2. AUTO SEARCH
-async function autoSearch(el) {
+// 2. Auto-Search with Spinner
+async function handleAutoSearch(el) {
+    const status = document.getElementById('searchStatus');
+    const loader = document.getElementById('searchLoader');
+    
     if(el.value.length === 10) {
-        const res = await fetch(`${URL}?action=search&mobile=${el.value}`);
-        const data = await res.json();
-        if(data.found) document.getElementById('name').value = data.name;
+        loader.style.display = 'block'; // Show spinner
+        status.innerText = "Processing...";
+        
+        try {
+            const res = await fetch(`${URL}?action=search&mobile=${el.value}`);
+            const data = await res.json();
+            loader.style.display = 'none'; // Hide spinner
+            
+            if(data.found) {
+                document.getElementById('name').value = data.name;
+                status.innerText = "✓ Welcome back, " + data.name;
+                status.style.color = "green";
+            } else {
+                status.innerText = "New Visitor";
+                status.style.color = "#007bff";
+            }
+        } catch(e) {
+            loader.style.display = 'none';
+            status.innerText = "Search failed";
+        }
+    } else {
+        status.innerText = "";
+        loader.style.display = 'none';
     }
 }
+
+
 
 // 3. RECORDS & OUT LOGIC
 async function loadRecords() {
@@ -168,10 +216,19 @@ function compress(f) {
     });
 }
 
-function switchTab(t) {
+// 1. Tab Switching with Active Indicator
+function switchTab(tabId) {
+    // Hide all contents
     document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
-    document.getElementById(t+'Tab').style.display = 'block';
-    if(t === 'records') loadRecords();
+    // Remove active class from all buttons
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    
+    // Show selected tab and highlight button
+    document.getElementById(tabId + 'Tab').style.display = 'block';
+    const activeBtn = document.querySelector(`[onclick="switchTab('${tabId}')"]`);
+    if(activeBtn) activeBtn.classList.add('active');
+    
+    if(tabId === 'records') loadRecords();
 }
 
 function toggleOther() { document.getElementById('otherDiv').style.display = (document.getElementById('purpose').value === 'Other') ? 'block' : 'none'; }
