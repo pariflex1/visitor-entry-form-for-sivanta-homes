@@ -50,12 +50,12 @@
             <div class="form-group">
                 <label>Mobile Number</label>
                 <div class="search-wrapper">
-                    <input type="tel" id="mobile" maxlength="10" placeholder="10 Digits" oninput="handleAutoSearch(this)">
+                    <input type="tel" id="mobile" maxlength="10" placeholder="10 Digits" required oninput="handleAutoSearch(this)">
                     <div id="searchLoader"></div>
                 </div>
                 <small id="searchStatus" style="font-weight:600;"></small>
             </div>
-            <div class="form-group"><label>Name</label><input type="text" id="name"></div>
+            <div class="form-group"><label>Name</label><input type="text" id="name" required></div>
             <div class="form-group">
                 <label>Purpose</label>
                 <select id="purpose" onchange="toggleOther()">
