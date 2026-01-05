@@ -132,7 +132,7 @@
 
 <script>
 // REPLACE WITH YOUR ACTUAL DEPLOYED WEB APP URL
-const URL = "https://script.google.com/macros/s/AKfycbz96RbwWf_jMQGsz7lTGoebiFsdeusayuR3k6a_y8Q7nt7NhgIAZSQAp6Twu7Yx3oE0/exec";
+const URL = "https://script.google.com/macros/s/AKfycbyeCXSgNYYu1v_-8WsaHk3HxCcBaAO0DJ1qYF7UPg5KPMXSJOAOzAclSErCVjmn5WZs/exec";
 
 window.onload = () => { if(localStorage.getItem('guard')) showApp(); };
 
@@ -226,6 +226,7 @@ async function submitEntry() {
 async function loadRecords() {
     const res = await fetch(`${URL}?action=getRecords&from=${document.getElementById('fromD').value}&to=${document.getElementById('toD').value}&mobile=${document.getElementById('searchM').value}`);
     const data = await res.json();
+    
     document.getElementById('recordsList').innerHTML = data.records.map(r => `
         <div class="record-card" style="border-left: 5px solid ${r.status === 'IN' ? '#28a745' : '#dc3545'}">
             <div class="action-area" style="float:right;">
@@ -233,15 +234,14 @@ async function loadRecords() {
             </div>
             <strong>${r.name}</strong> <br>
             <small>${r.mobile} | ${r.purpose}</small><br>
-            <small>IN: ${r.inTime} (${r.guard})</small>
+            <small>IN: ${r.inTime} (${r.inGuard})</small>
             ${r.status === 'OUT' ? `
-                <br><small style="color:#dc3545">OUT: ${r.outTime}</small>
-                <br><small><b>Stay Duration: ${r.duration || 'N/A'}</b></small>
+                <br><small style="color:#dc3545">OUT: ${r.outTime} (${r.outGuard || 'N/A'})</small>
+                <br><small><b>Duration: ${r.duration || 'N/A'}</b></small> 
             ` : ''}
         </div>
     `).join('') || '<p style="text-align:center">No records found</p>';
 }
-
 // Process Exit with WhatsApp Handover
 async function processOut(mobile, btnElement) {
     if(!confirm("Process Exit for this visitor?")) return;
