@@ -8,182 +8,191 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Poppins', sans-serif; margin: 0; background: #f4f7f9; }
-        .scanner-box { width: 100%; height: 280px; background: #000; position: relative; overflow: hidden; }
+        .scanner-box { width: 100%; height: 250px; background: #000; position: relative; }
         #video { width: 100%; height: 100%; object-fit: cover; }
-        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 2px solid #007bff; box-sizing: border-box; pointer-events: none; opacity: 0.5; }
         .card { background: #fff; margin: 10px; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .form-group { margin-bottom: 15px; }
+        .form-group { margin-bottom: 15px; position: relative; }
         label { display: block; font-size: 12px; font-weight: 600; color: #666; }
-        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; margin-top: 5px; }
-        .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; }
-        .btn-scan { background: #007bff; color: white; margin-bottom: 10px; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; margin-top: 5px; padding-right: 40px; }
+        .mic-btn { position: absolute; right: 10px; top: 32px; font-size: 20px; cursor: pointer; color: #007bff; border:none; background:none; }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; margin-top: 10px; }
+        .btn-scan { background: #007bff; color: white; }
         .btn-submit { background: #28a745; color: white; }
+        #status-indicator { text-align: center; padding: 10px; font-weight: 600; background: #e7f3ff; color: #007bff; }
     </style>
 </head>
 <body onload="initApp()">
 
-<div id="loginScreen" class="card" style="margin-top: 20vh;">
-    <h2 style="text-align: center;">🔐 Guard Login</h2>
-    <input type="text" id="gName" placeholder="Guard Name">
-    <button class="btn btn-scan" style="margin-top:15px" onclick="login()">Login</button>
-</div>
+<div id="status-indicator">Initializing System...</div>
 
-<div id="mainApp" style="display:none;">
+<div id="mainApp">
     <div class="scanner-box">
         <video id="video" autoplay muted playsinline></video>
-        <div class="overlay"></div>
     </div>
     
     <div class="card">
-        <button class="btn btn-scan" onclick="captureAndIdentify()">🔍 Identify Face / Scan QR</button>
-        <p id="status" style="text-align:center; font-weight:600; color:#007bff; margin:0;"></p>
+        <button class="btn btn-scan" onclick="captureAndIdentify()">👤 SCAN FACE / QR CODE</button>
         
         <form onsubmit="event.preventDefault(); submitEntry();">
             <div class="form-group">
-                <label>Unit Number</label>
-                <select id="house">
-                    <option value="Office">Office</option>
-                    <script>for(let i=1;i<=204;i++) document.write(`<option value="Unit ${i}">Unit ${i}</option>`);</script>
+                <label>Unit/House Number</label>
+                <input type="text" id="house" placeholder="Search Unit..." list="unitList" required>
+                <datalist id="unitList">
+                    <option value="Office">
+                    <script>for(let i=1;i<=204;i++) document.write(`<option value="Unit ${i}">`);</script>
+                </datalist>
+                <button type="button" class="mic-btn" onclick="startVoice('house')">🎤</button>
+            </div>
+
+            <div class="form-group">
+                <label>Mobile Number (Required)</label>
+                <input type="tel" id="mobile" placeholder="10 Digits" maxlength="10" oninput="handleMobileSearch(this)" required>
+                <button type="button" class="mic-btn" onclick="startVoice('mobile')">🎤</button>
+            </div>
+
+            <div class="form-group">
+                <label>Visitor Name (Required)</label>
+                <input type="text" id="name" placeholder="Full Name" required>
+                <button type="button" class="mic-btn" onclick="startVoice('name')">🎤</button>
+            </div>
+
+            <div class="form-group">
+                <label>Vehicle Photo (Read Plate)</label>
+                <input type="file" id="p2File" accept="image/*" capture="camera" onchange="processVehicleOCR(this)">
+                <input type="text" id="vehicle" placeholder="Detected Plate Number" style="margin-top:10px;">
+                <button type="button" class="mic-btn" style="top:90px" onclick="startVoice('vehicle')">🎤</button>
+            </div>
+
+            <div class="form-group">
+                <label>Purpose of Visit</label>
+                <select id="purpose" onchange="toggleOtherPurpose(this.value)">
+                    <option value="Personal">Personal</option>
+                    <option value="Delivery">Delivery</option>
+                    <option value="Maintenance">Maintenance</option>
+                    <option value="Courier">Courier</option>
+                    <option value="Other">Other...</option>
                 </select>
+                <input type="text" id="otherPurpose" placeholder="Type purpose here" style="display:none; margin-top:5px;">
             </div>
+
             <div class="form-group">
-                <label>Visitor Mobile</label>
-                <input type="tel" id="mobile" required>
+                <label>Number of Visitors</label>
+                <input type="number" id="vCount" value="1" min="1">
+                <button type="button" class="mic-btn" onclick="startVoice('vCount')">🎤</button>
             </div>
-            <div class="form-group">
-                <label>Visitor Name</label>
-                <input type="text" id="name" required>
-            </div>
-            <div class="form-group">
-                <label>Vehicle Photo (OCR)</label>
-                <input type="file" id="p2" accept="image/*" capture="camera" onchange="runOCR(this)">
-            </div>
-            <input type="text" id="vehicle" placeholder="Vehicle Number">
-            <div class="form-group">
-                <label>Visitors</label>
-                <select id="vCount"><option>1</option><option>2</option><option>3</option><option>4</option><option>5+</option></select>
-            </div>
-            <button type="submit" class="btn btn-submit">Submit & Send WhatsApp</button>
+
+            <button type="submit" id="submitBtn" class="btn btn-submit">SUBMIT & SEND WHATSAPP</button>
         </form>
     </div>
 </div>
 
 <script>
-const URL = "https://script.google.com/macros/s/AKfycbz4fx6vtiwjOfCXlKfiy_VJJ9XfBItEzdW8_qNLjyiZ3JCJvAi_W9rLDSkBIUv8Cvtb/exec";
+const URL = "https://script.google.com/macros/s/AKfycbz4fx6vtiwjOfCXlKfiy_VJJ9XfBItEzdW8_qNLjyiZ3JCJvAi_W9rLDSkBIUv8Cvtb/exec"; 
 let localProfiles = [];
-let lastDescriptor = null;
+let lastFaceDescriptor = null;
 
+// Initialize System
 async function initApp() {
-    if(localStorage.getItem('guard')) login();
-    const MODEL_URL = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
-    await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
-    await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-    await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+    const status = document.getElementById('status-indicator');
+    try {
+        const MODEL_URL = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
+        await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
+        await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+        await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+        
+        const res = await fetch(URL + "?action=getProfiles");
+        const data = await res.json();
+        localProfiles = data.profiles;
+        
+        startCamera();
+        status.innerText = "✓ System Ready: Scan Face or QR";
+    } catch (e) {
+        status.innerText = "❌ Initialization Error";
+    }
+}
+
+// 🎤 VOICE TO TEXT (MIC)
+function startVoice(fieldId) {
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = 'en-IN';
+    recognition.start();
+    document.getElementById('status-indicator').innerText = "Listening...";
     
-    const res = await fetch(URL + "?action=getProfiles");
+    recognition.onresult = (event) => {
+        let text = event.results[0][0].transcript;
+        document.getElementById(fieldId).value = text.replace(/\s/g, '').toUpperCase();
+        document.getElementById('status-indicator').innerText = "✓ Voice Captured";
+    };
+}
+
+// 🚗 VEHICLE OCR FIX
+async function processVehicleOCR(input) {
+    if (!input.files[0]) return;
+    document.getElementById('status-indicator').innerText = "Reading Number Plate... Please wait.";
+    
+    const base64 = await toBase64(input.files[0]);
+    const res = await fetch(URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'ocr', image: base64.split(',')[1] })
+    });
     const data = await res.json();
-    localProfiles = data.profiles;
+    document.getElementById('vehicle').value = data.text;
+    document.getElementById('status-indicator').innerText = "✓ Plate Read Successfully";
+}
+
+// 👤 FACE SCAN
+async function captureAndIdentify() {
+    const video = document.getElementById('video');
+    const status = document.getElementById('status-indicator');
+    status.innerText = "Scanning Face/QR...";
     
-    startCamera();
+    const detection = await faceapi.detectSingleFace(video).withFaceLandmarks().withFaceDescriptor();
+    if (detection) {
+        lastFaceDescriptor = Array.from(detection.descriptor);
+        let match = { dist: 1, name: '', mob: '' };
+        
+        localProfiles.forEach(p => {
+            const dist = faceapi.euclideanDistance(lastFaceDescriptor, new Float32Array(JSON.parse(p[2])));
+            if(dist < match.dist) match = { dist, name: p[0], mob: p[1] };
+        });
+
+        if (match.dist < 0.5) {
+            document.getElementById('name').value = match.name;
+            document.getElementById('mobile').value = match.mob;
+            status.innerText = "✓ Welcome back, " + match.name;
+        } else {
+            status.innerText = "New Visitor Detected";
+        }
+    }
+}
+
+// 🔍 MOBILE AUTO-SEARCH
+async function handleMobileSearch(el) {
+    if (el.value.length === 10) {
+        const res = await fetch(URL + "?action=search&mobile=" + el.value);
+        const data = await res.json();
+        if (data.found) {
+            document.getElementById('name').value = data.name;
+            document.getElementById('status-indicator').innerText = "✓ Mobile Found: " + data.name;
+        }
+    }
+}
+
+function toggleOtherPurpose(val) {
+    document.getElementById('otherPurpose').style.display = (val === 'Other') ? 'block' : 'none';
+}
+
+function toBase64(file) {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+    });
 }
 
 function startCamera() {
     navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(s => {
         document.getElementById('video').srcObject = s;
-    });
-}
-
-async function captureAndIdentify() {
-    const video = document.getElementById('video');
-    const status = document.getElementById('status');
-    status.innerText = "Scanning...";
-
-    // 1. Check for QR Code
-    const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0);
-    const imgData = ctx.getImageData(0,0,canvas.width,canvas.height);
-    const qr = jsQR(imgData.data, imgData.width, imgData.height);
-    
-    if(qr) {
-        status.innerText = "QR Detected!";
-        const parts = qr.data.split('|'); // Assume QR format: Name|Unit|Mobile
-        if(parts.length > 1) {
-            document.getElementById('name').value = parts[0];
-            document.getElementById('house').value = parts[1];
-            document.getElementById('mobile').value = parts[2] || '';
-            return;
-        }
-    }
-
-    // 2. Check for Face
-    const detection = await faceapi.detectSingleFace(video).withFaceLandmarks().withFaceDescriptor();
-    if(detection) {
-        lastDescriptor = Array.from(detection.descriptor);
-        let best = { dist: 1, name: '', mob: '' };
-        localProfiles.forEach(p => {
-            const dist = faceapi.euclideanDistance(lastDescriptor, new Float32Array(JSON.parse(p[2])));
-            if(dist < best.dist) best = { dist, name: p[0], mob: p[1] };
-        });
-        if(best.dist < 0.5) {
-            document.getElementById('name').value = best.name;
-            document.getElementById('mobile').value = best.mob;
-            status.innerText = "Recognized: " + best.name;
-        } else {
-            status.innerText = "New Visitor";
-        }
-    }
-}
-
-async function runOCR(input) {
-    const status = document.getElementById('status');
-    status.innerText = "Reading Plate...";
-    const compressed = await compressFile(input.files[0]);
-    const res = await fetch(URL, { method: 'POST', body: JSON.stringify({ action: 'ocr', image: compressed }) });
-    const data = await res.json();
-    document.getElementById('vehicle').value = data.text;
-    status.innerText = "Plate Detected";
-}
-
-async function submitEntry() {
-    const video = document.getElementById('video');
-    const canvas = document.createElement('canvas');
-    canvas.width = 400; canvas.height = 300;
-    canvas.getContext('2d').drawImage(video, 0,0,400,300);
-    
-    const payload = {
-        action: 'submit',
-        data: {
-            name: document.getElementById('name').value,
-            mobile: document.getElementById('mobile').value,
-            house: document.getElementById('house').value,
-            vehicle: document.getElementById('vehicle').value,
-            visitors: document.getElementById('vCount').value,
-            guard: localStorage.getItem('guard'),
-            descriptor: lastDescriptor,
-            p1: { data: canvas.toDataURL('image/jpeg', 0.6).split(',')[1], type: 'image/jpeg' }
-        }
-    };
-    
-    const res = await fetch(URL, { method: 'POST', body: JSON.stringify(payload) });
-    const result = await res.json();
-    window.open(result.waLink, '_blank');
-    location.reload();
-}
-
-function login() { 
-    const n = document.getElementById('gName').value || localStorage.getItem('guard');
-    if(!n) return;
-    localStorage.setItem('guard', n);
-    document.getElementById('loginScreen').style.display='none';
-    document.getElementById('mainApp').style.display='block';
-}
-
-function compressFile(f) {
-    return new Promise(res => {
-        const r = new FileReader(); r.readAsDataURL(f);
-        r.onload = e => res(e.target.result.split(',')[1]);
     });
 }
 </script>
