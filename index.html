@@ -1,293 +1,189 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Visitor Portal</title>
+    <title>Smart Guard Portal</title>
+    <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: 'Poppins', sans-serif; background: #f4f7f9; margin: 0; }
-        
-        /* Tab Navigation */
-        .tab-container { background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
-        .tabs { display: flex; max-width: 480px; margin: 0 auto; }
-        .tab-btn { flex: 1; padding: 16px; border: none; background: #eee; font-weight: 600; color: #888; cursor: pointer; border-bottom: 4px solid transparent; transition: 0.3s; }
-        .tab-btn.active { color: #007bff; background: #fff; border-bottom: 4px solid #007bff; }
-        
-        /* Layout & Cards */
-        .card { background: #fff; max-width: 480px; margin: 15px auto; padding: 20px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        body { font-family: 'Poppins', sans-serif; margin: 0; background: #f4f7f9; }
+        .scanner-box { width: 100%; height: 280px; background: #000; position: relative; overflow: hidden; }
+        #video { width: 100%; height: 100%; object-fit: cover; }
+        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 2px solid #007bff; box-sizing: border-box; pointer-events: none; opacity: 0.5; }
+        .card { background: #fff; margin: 10px; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 13px; color: #555; }
-        input, select { width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 10px; font-size: 16px; transition: 0.3s; }
-        input:focus { border-color: #007bff; outline: none; }
-        
-        /* Buttons */
-        .btn-submit { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 16px; }
-        .btn-submit:active { transform: scale(0.98); }
-        .btn-out { background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 8px; font-weight: 600; float: right; cursor: pointer; }
-        .wa-send-btn { background: #25D366; color: white; border: none; padding: 8px 12px; border-radius: 8px; font-weight: 600; float: right; cursor: pointer; display: flex; align-items: center; gap: 5px; }
-        
-        /* Records Tab Styling */
-        .record-card { border: 1px solid #eee; padding: 15px; border-radius: 12px; margin-bottom: 12px; background: #fff; }
-        
-        /* Processing Indicators */
-        .search-wrapper { position: relative; width: 100%; }
-        #searchLoader { display: none; position: absolute; right: 10px; top: 12px; width: 20px; height: 20px; border: 3px solid #f3f3f3; border-top: 3px solid #007bff; border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
-        #loader { display: none; text-align: center; padding: 20px; }
+        label { display: block; font-size: 12px; font-weight: 600; color: #666; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; margin-top: 5px; }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; }
+        .btn-scan { background: #007bff; color: white; margin-bottom: 10px; }
+        .btn-submit { background: #28a745; color: white; }
     </style>
 </head>
-<body>
+<body onload="initApp()">
 
 <div id="loginScreen" class="card" style="margin-top: 20vh;">
     <h2 style="text-align: center;">🔐 Guard Login</h2>
-    <div class="form-group">
-        <input type="text" id="gName" placeholder="Guard Name">
-    </div>
-    <div class="form-group">
-        <input type="password" id="gPin" placeholder="PIN" maxlength="4">
-    </div>
-    <button class="btn-submit" onclick="login()" style="margin-top:20px;">Login</button>
+    <input type="text" id="gName" placeholder="Guard Name">
+    <button class="btn btn-scan" style="margin-top:15px" onclick="login()">Login</button>
 </div>
 
 <div id="mainApp" style="display:none;">
-    <div class="tab-container">
-        <div class="tabs">
-            <button class="tab-btn active" id="btn-entry" onclick="switchTab('entry')">📝 Entry</button>
-            <button class="tab-btn" id="btn-records" onclick="switchTab('records')">📋 Records</button>
-            <button class="tab-btn" onclick="logout()">🔴 Logout</button>
-        </div>
+    <div class="scanner-box">
+        <video id="video" autoplay muted playsinline></video>
+        <div class="overlay"></div>
     </div>
-
-    <div id="entryTab" class="tab-content">
-        <div class="card" id="formDiv">
-            <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <h2 style="margin:0;">Visitor Check-in</h2>
-                <span id="activeGuardEntry" style="font-size:12px; color:#007bff; font-weight:600; background:#e7f3ff; padding:4px 8px; border-radius:5px;"></span>
-            </div>
-            
-            <form onsubmit="event.preventDefault(); submitEntry();">
-                <div class="form-group">
-                    <label>Mobile Number</label>
-                    <div class="search-wrapper">
-                        <input type="tel" id="mobile" maxlength="10" pattern="[0-9]{10}" placeholder="10 Digits" oninput="handleAutoSearch(this)" required>
-                        <div id="searchLoader"></div>
-                    </div>
-                    <small id="searchStatus" style="font-weight:600;"></small>
-                </div>
-                
-                <div class="form-group">
-                    <label>Name</label>
-                    <input type="text" id="name" placeholder="Full Name" required>
-                </div>
-                
-                <div class="form-group">
-                    <label>Purpose</label>
-                    <select id="purpose" onchange="toggleOther()">
-                        <option>Personal Meeting</option><option>Delivery</option><option>Business</option><option>Maintenance</option><option>Courier</option><option>Interview</option><option>Guest</option><option>Other</option>
-                    </select>
-                </div>
-                <div id="otherDiv" style="display:none;" class="form-group">
-                    <input type="text" id="otherPurpose" placeholder="Specify Purpose...">
-                </div>
-                
-                <div class="form-group"><label>Photo 1</label><input type="file" id="p1" accept="image/*"></div>
-                <div class="form-group"><label>Photo 2</label><input type="file" id="p2" accept="image/*"></div>
-                
-                <button type="submit" class="btn-submit">Submit IN</button>
-            </form>
-        </div>
+    
+    <div class="card">
+        <button class="btn btn-scan" onclick="captureAndIdentify()">🔍 Identify Face / Scan QR</button>
+        <p id="status" style="text-align:center; font-weight:600; color:#007bff; margin:0;"></p>
         
-        <div id="loader" class="card">
-            <h3 style="text-align: center;">Processing Entry...</h3>
-        </div>
-        
-        <div id="successDiv" class="card" style="display:none; text-align:center;">
-            <h2 style="color:green">✓ Recorded</h2>
-            <p>Data saved successfully.</p>
-            <a id="wa-link" href="#" target="_blank" style="display:block; background:#25D366; color:white; padding:15px; border-radius:10px; text-decoration:none; font-weight:600; margin-bottom: 10px;">📱 Send WhatsApp</a>
-            <button onclick="location.reload()" class="btn-submit" style="background:#666;">New Entry</button>
-        </div>
-    </div>
-
-    <div id="recordsTab" class="tab-content" style="display:none;">
-        <div class="card">
-            <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h3 style="margin:0;">Records</h3>
-                <span id="activeGuardRecords" style="font-size:12px; color:#007bff; font-weight:600;"></span>
+        <form onsubmit="event.preventDefault(); submitEntry();">
+            <div class="form-group">
+                <label>Unit Number</label>
+                <select id="house">
+                    <option value="Office">Office</option>
+                    <script>for(let i=1;i<=204;i++) document.write(`<option value="Unit ${i}">Unit ${i}</option>`);</script>
+                </select>
             </div>
-            
-            <div style="display:flex; gap:5px; margin-bottom:10px;">
-                <input type="date" id="fromD" onchange="loadRecords()">
-                <input type="date" id="toD" onchange="loadRecords()">
+            <div class="form-group">
+                <label>Visitor Mobile</label>
+                <input type="tel" id="mobile" required>
             </div>
-            <input type="tel" id="searchM" placeholder="Search Mobile..." oninput="loadRecords()">
-            
-            <div id="recordsList" style="margin-top:15px;"></div>
-        </div>
+            <div class="form-group">
+                <label>Visitor Name</label>
+                <input type="text" id="name" required>
+            </div>
+            <div class="form-group">
+                <label>Vehicle Photo (OCR)</label>
+                <input type="file" id="p2" accept="image/*" capture="camera" onchange="runOCR(this)">
+            </div>
+            <input type="text" id="vehicle" placeholder="Vehicle Number">
+            <div class="form-group">
+                <label>Visitors</label>
+                <select id="vCount"><option>1</option><option>2</option><option>3</option><option>4</option><option>5+</option></select>
+            </div>
+            <button type="submit" class="btn btn-submit">Submit & Send WhatsApp</button>
+        </form>
     </div>
 </div>
 
 <script>
-// REPLACE WITH YOUR ACTUAL DEPLOYED WEB APP URL
-const URL = "https://script.google.com/macros/s/AKfycbxvyydo-Ir6bPPUPCC8AG7ep0t0b9gwPjmqWzhQY5mbk3oKQmcazqMvfWehJMpc_57z/exec";
+const URL = "https://script.google.com/macros/s/AKfycbz4fx6vtiwjOfCXlKfiy_VJJ9XfBItEzdW8_qNLjyiZ3JCJvAi_W9rLDSkBIUv8Cvtb/exec";
+let localProfiles = [];
+let lastDescriptor = null;
 
-window.onload = () => { if(localStorage.getItem('guard')) showApp(); };
+async function initApp() {
+    if(localStorage.getItem('guard')) login();
+    const MODEL_URL = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
+    await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
+    await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+    await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+    
+    const res = await fetch(URL + "?action=getProfiles");
+    const data = await res.json();
+    localProfiles = data.profiles;
+    
+    startCamera();
+}
+
+function startCamera() {
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(s => {
+        document.getElementById('video').srcObject = s;
+    });
+}
+
+async function captureAndIdentify() {
+    const video = document.getElementById('video');
+    const status = document.getElementById('status');
+    status.innerText = "Scanning...";
+
+    // 1. Check for QR Code
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0);
+    const imgData = ctx.getImageData(0,0,canvas.width,canvas.height);
+    const qr = jsQR(imgData.data, imgData.width, imgData.height);
+    
+    if(qr) {
+        status.innerText = "QR Detected!";
+        const parts = qr.data.split('|'); // Assume QR format: Name|Unit|Mobile
+        if(parts.length > 1) {
+            document.getElementById('name').value = parts[0];
+            document.getElementById('house').value = parts[1];
+            document.getElementById('mobile').value = parts[2] || '';
+            return;
+        }
+    }
+
+    // 2. Check for Face
+    const detection = await faceapi.detectSingleFace(video).withFaceLandmarks().withFaceDescriptor();
+    if(detection) {
+        lastDescriptor = Array.from(detection.descriptor);
+        let best = { dist: 1, name: '', mob: '' };
+        localProfiles.forEach(p => {
+            const dist = faceapi.euclideanDistance(lastDescriptor, new Float32Array(JSON.parse(p[2])));
+            if(dist < best.dist) best = { dist, name: p[0], mob: p[1] };
+        });
+        if(best.dist < 0.5) {
+            document.getElementById('name').value = best.name;
+            document.getElementById('mobile').value = best.mob;
+            status.innerText = "Recognized: " + best.name;
+        } else {
+            status.innerText = "New Visitor";
+        }
+    }
+}
+
+async function runOCR(input) {
+    const status = document.getElementById('status');
+    status.innerText = "Reading Plate...";
+    const compressed = await compressFile(input.files[0]);
+    const res = await fetch(URL, { method: 'POST', body: JSON.stringify({ action: 'ocr', image: compressed }) });
+    const data = await res.json();
+    document.getElementById('vehicle').value = data.text;
+    status.innerText = "Plate Detected";
+}
+
+async function submitEntry() {
+    const video = document.getElementById('video');
+    const canvas = document.createElement('canvas');
+    canvas.width = 400; canvas.height = 300;
+    canvas.getContext('2d').drawImage(video, 0,0,400,300);
+    
+    const payload = {
+        action: 'submit',
+        data: {
+            name: document.getElementById('name').value,
+            mobile: document.getElementById('mobile').value,
+            house: document.getElementById('house').value,
+            vehicle: document.getElementById('vehicle').value,
+            visitors: document.getElementById('vCount').value,
+            guard: localStorage.getItem('guard'),
+            descriptor: lastDescriptor,
+            p1: { data: canvas.toDataURL('image/jpeg', 0.6).split(',')[1], type: 'image/jpeg' }
+        }
+    };
+    
+    const res = await fetch(URL, { method: 'POST', body: JSON.stringify(payload) });
+    const result = await res.json();
+    window.open(result.waLink, '_blank');
+    location.reload();
+}
 
 function login() { 
-    const gName = document.getElementById('gName').value;
-    if(!gName) { alert("Please enter Guard Name"); return; }
-    localStorage.setItem('guard', gName);
-    showApp(); 
+    const n = document.getElementById('gName').value || localStorage.getItem('guard');
+    if(!n) return;
+    localStorage.setItem('guard', n);
+    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('mainApp').style.display='block';
 }
 
-function showApp() { 
-    const guardName = localStorage.getItem('guard');
-    document.getElementById('loginScreen').style.display='none'; 
-    document.getElementById('mainApp').style.display='block'; 
-    
-    // Set Guard Name in UI
-    document.getElementById('activeGuardEntry').innerText = "Guard: " + guardName;
-    document.getElementById('activeGuardRecords').innerText = "Active: " + guardName;
-}
-
-function logout() { 
-    if (confirm("Are you sure you want to logout?")) { 
-        localStorage.clear(); 
-        location.reload(); 
-    } 
-}
-
-// Mobile Auto-Search with Spinner
-async function handleAutoSearch(el) {
-    const status = document.getElementById('searchStatus');
-    const loader = document.getElementById('searchLoader');
-    if(el.value.length === 10) {
-        loader.style.display = 'block';
-        status.innerText = "Searching...";
-        try {
-            const res = await fetch(`${URL}?action=search&mobile=${el.value}`);
-            const data = await res.json();
-            loader.style.display = 'none';
-            if(data.found) {
-                document.getElementById('name').value = data.name;
-                status.innerText = "✓ Welcome back, " + data.name; 
-                status.style.color = "green";
-            } else { 
-                status.innerText = "+ New Visitor Entry"; 
-                status.style.color = "#007bff"; 
-            }
-        } catch(e) { 
-            loader.style.display = 'none'; 
-            status.innerText = "Error searching database"; 
-        }
-    } else { 
-        status.innerText = ""; 
-        loader.style.display = 'none'; 
-    }
-}
-
-// Submit Entry with Compression
-async function submitEntry() {
-    document.getElementById('formDiv').style.display='none'; 
-    document.getElementById('loader').style.display='block';
-    
-    const p1 = document.getElementById('p1').files[0]; 
-    const p2 = document.getElementById('p2').files[0];
-    
-    const payload = { 
-        action: 'submit', 
-        data: { 
-            name: document.getElementById('name').value, 
-            mobile: document.getElementById('mobile').value, 
-            purpose: document.getElementById('purpose').value === 'Other' ? document.getElementById('otherPurpose').value : document.getElementById('purpose').value, 
-            guard: localStorage.getItem('guard'), 
-            p1: p1 ? await compress(p1) : null, 
-            p2: p2 ? await compress(p2) : null 
-        } 
-    };
-
-    try {
-        const res = await fetch(URL, { method: "POST", body: JSON.stringify(payload) });
-        const result = await res.json();
-        document.getElementById('loader').style.display='none'; 
-        document.getElementById('successDiv').style.display='block';
-        document.getElementById('wa-link').href = result.waLink;
-    } catch(e) {
-        alert("Failed to save entry. Check internet connection.");
-        document.getElementById('loader').style.display='none';
-        document.getElementById('formDiv').style.display='block';
-    }
-}
-
-// Load Records with Duration Display
-async function loadRecords() {
-    const res = await fetch(`${URL}?action=getRecords&from=${document.getElementById('fromD').value}&to=${document.getElementById('toD').value}&mobile=${document.getElementById('searchM').value}`);
-    const data = await res.json();
-    document.getElementById('recordsList').innerHTML = data.records.map(r => `
-        <div class="record-card" style="border-left: 5px solid ${r.status === 'IN' ? '#28a745' : '#dc3545'}">
-            <div class="action-area" style="float:right;">
-                ${r.status === 'IN' ? `<button class="btn-out" onclick="processOut('${r.mobile}', this)">OUT</button>` : ''}
-            </div>
-            <strong>${r.name}</strong> <br>
-            <small>${r.mobile} | ${r.purpose}</small><br>
-            <small>IN: ${r.inTime} (${r.inGuard})</small> ${r.status === 'OUT' ? `
-                <br><small style="color:#dc3545">OUT: ${r.outTime} (${r.outGuard || 'N/A'})</small> <br><small><b>Duration: ${r.duration || 'N/A'}</b></small> 
-            ` : ''}
-        </div>
-    `).join('') || '<p style="text-align:center">No records found</p>';
-}
-// Process Exit with WhatsApp Handover
-async function processOut(mobile, btnElement) {
-    if(!confirm("Confirm exit and prepare WhatsApp?")) return;
-    btnElement.innerText = "Saving...";
-    btnElement.disabled = true;
-
-    const response = await fetch(URL, { 
-        method: "POST", 
-        body: JSON.stringify({ 
-            action: 'processOut', 
-            data: { 
-                mobile: mobile, 
-                guard: localStorage.getItem('guard') // Changed to 'guard' to match script
-            } 
-        }) 
-    });
-    const result = await response.json();
-    if(result.status === 'success') {
-        btnElement.parentElement.innerHTML = `<button class="wa-send-btn" onclick="window.open('${result.waLink}', '_blank')">📱 Send WhatsApp</button>`;
-    }
-}
-// Tab Switching
-function switchTab(tabId) {
-    document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    
-    document.getElementById(tabId + 'Tab').style.display = 'block';
-    document.getElementById('btn-' + tabId).classList.add('active');
-    
-    if(tabId === 'records') loadRecords();
-}
-
-// Helper Functions
-function toggleOther() { 
-    document.getElementById('otherDiv').style.display = (document.getElementById('purpose').value === 'Other') ? 'block' : 'none'; 
-}
-
-function compress(f) {
+function compressFile(f) {
     return new Promise(res => {
-        const reader = new FileReader(); reader.readAsDataURL(f);
-        reader.onload = e => {
-            const img = new Image(); img.src = e.target.result;
-            img.onload = () => {
-                const canvas = document.createElement('canvas'); const max = 600; let w = img.width, h = img.height;
-                if(w > h) { if(w > max) { h *= max/w; w = max; } } else { if(h > max) { w *= max/h; h = max; } }
-                canvas.width = w; canvas.height = h; canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                res({ data: canvas.toDataURL('image/jpeg', 0.4).split(',')[1], type: 'image/jpeg' });
-            }
-        }
+        const r = new FileReader(); r.readAsDataURL(f);
+        r.onload = e => res(e.target.result.split(',')[1]);
     });
 }
 </script>
