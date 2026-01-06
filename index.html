@@ -95,7 +95,7 @@ let lastFaceDescriptor = null;
 async function initApp() {
     const status = document.getElementById('status-indicator');
     try {
-        const MODEL_URL = 'https://script.google.com/macros/s/AKfycbzuTr-bAgLOjmQfjA6gtpxllebBvuPUmY0RY73usv4q-11tJL2OAAwiKpRh7GSPrG67/exec';
+        const MODEL_URL = 'https://script.google.com/macros/s/AKfycbxpdZACT97j6ibSzUDKBW9hDy7jOjwzVlq0cUUXBD7BHhJXYGnyLFQbuA78kSZy3JUf/exec';
         await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
         await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
         await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
